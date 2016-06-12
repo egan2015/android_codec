@@ -90,7 +90,7 @@ EGREP="/usr/bin/grep -E"
 FGREP="/usr/bin/grep -F"
 
 # A BSD- or MS-compatible name lister.
-NM="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-nm"
+NM="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-nm"
 
 # Whether we need soft or hard links.
 LN_S="ln -s"
@@ -141,7 +141,7 @@ DLLTOOL="false"
 sharedlib_from_linklib_cmd="printf %s\\n"
 
 # The archiver.
-AR="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ar"
+AR="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ar"
 
 # Flags to create an archive.
 AR_FLAGS="cru"
@@ -150,10 +150,10 @@ AR_FLAGS="cru"
 archiver_list_spec="@"
 
 # A symbol stripping program.
-STRIP="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip"
+STRIP="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip"
 
 # Commands used to install an old-style archive.
-RANLIB="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ranlib"
+RANLIB="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ranlib"
 old_postinstall_cmds="chmod 644 \$oldlib~\$RANLIB \$tool_oldlib"
 old_postuninstall_cmds=""
 
@@ -161,10 +161,10 @@ old_postuninstall_cmds=""
 lock_old_archive_extraction=no
 
 # A C compiler.
-LTCC="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c/platforms/android-23/arch-arm"
+LTCC="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm"
 
 # LTCC compiler flags.
-LTCFLAGS="-O3 -mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__ --sysroot=/opt/android-ndk-r11c/platforms/android-23/arch-arm"
+LTCFLAGS="-O3 -mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__ --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm"
 
 # Take the output of nm and produce a listing of raw symbols and C names.
 global_symbol_pipe="sed -n -e 's/^.*[	 ]\\([ABCDGIRSTW][ABCDGIRSTW]*\\)[	 ][	 ]*\\([_A-Za-z][_A-Za-z0-9]*\\)\$/\\1 \\2 \\2/p' | sed '/ __gnu_lto/d'"
@@ -182,7 +182,7 @@ global_symbol_to_c_name_address_lib_prefix="sed -n -e 's/^: \\([^ ]*\\)[ ]*\$/  
 nm_file_list_spec="@"
 
 # The root where to search for dependent libraries,and in which our libraries should be installed.
-lt_sysroot=/opt/android-ndk-r11c/platforms/android-23/arch-arm
+lt_sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm
 
 # The name of the directory that contains temporary libtool files.
 objdir=.libs
@@ -272,7 +272,7 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/armv7-a/thumb /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/lib/armv7-a/thumb /opt/android-ndk-r11c/platforms/android-23/arch-arm/usr/lib "
+sys_lib_search_path_spec="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/armv7-a/thumb /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/lib/armv7-a/thumb /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/lib "
 
 # Run-time system search path for libraries.
 sys_lib_dlsearch_path_spec="/lib /usr/lib"
@@ -287,8 +287,8 @@ dlopen_self=unknown
 dlopen_self_static=unknown
 
 # Commands to strip libraries.
-old_striplib="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip --strip-debug"
-striplib="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip --strip-unneeded"
+old_striplib="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip --strip-debug"
+striplib="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip --strip-unneeded"
 
 
 # The linker used to build libraries.
@@ -302,7 +302,7 @@ reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
 old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$tool_oldlib"
 
 # A language specific compiler.
-CC="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c/platforms/android-23/arch-arm"
+CC="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm"
 
 # Is the compiler the GNU compiler?
 with_gcc=yes
@@ -10109,7 +10109,7 @@ reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
 old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$tool_oldlib"
 
 # A language specific compiler.
-CC="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++ --sysroot=/opt/android-ndk-r11c/platforms/android-23/arch-arm"
+CC="/opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++ --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm"
 
 # Is the compiler the GNU compiler?
 with_gcc=yes
@@ -10230,17 +10230,17 @@ file_list_spec=""
 hardcode_action=immediate
 
 # The directories searched by this compiler when creating a shared library.
-compiler_lib_search_dirs="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/armv7-a/thumb /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib/armv7-a/thumb /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9 /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib /opt/android-ndk-r11c/platforms/android-23/arch-arm/usr/lib"
+compiler_lib_search_dirs="/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/armv7-a/thumb /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib/armv7-a/thumb /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9 /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib /opt/android-ndk-r11c//platforms/android-9/arch-arm/usr/lib"
 
 # Dependencies to place before and after the objects being linked to
 # create a shared library.
-predep_objects="/opt/android-ndk-r11c/platforms/android-23/arch-arm/usr/lib/crtbegin_so.o"
-postdep_objects="/opt/android-ndk-r11c/platforms/android-23/arch-arm/usr/lib/crtend_so.o"
+predep_objects="/opt/android-ndk-r11c//platforms/android-9/arch-arm/usr/lib/crtbegin_so.o"
+postdep_objects="/opt/android-ndk-r11c//platforms/android-9/arch-arm/usr/lib/crtend_so.o"
 predeps=""
 postdeps="-lstdc++ -lm -lgcc -lc -ldl -lgcc"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/armv7-a/thumb -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib/armv7-a/thumb -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9 -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib -L/opt/android-ndk-r11c/platforms/android-23/arch-arm/usr/lib"
+compiler_lib_search_path="-L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/armv7-a/thumb -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib/armv7-a/thumb -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9 -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc -L/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib -L/opt/android-ndk-r11c//platforms/android-9/arch-arm/usr/lib"
 
 # ### END LIBTOOL TAG CONFIG: CXX

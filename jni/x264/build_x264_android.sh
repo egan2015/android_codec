@@ -1,7 +1,7 @@
 #!/bin/sh
 ANDROID_NDK_ROOT=$NDK_HOME
 PREBUILT=$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64
-PLATFORM=$ANDROID_NDK_ROOT/platforms/android-23/arch-arm
+PLATFORM=$ANDROID_NDK_ROOT/platforms/android-9/arch-arm
 ARM_INC=$PLATFORM/usr/include
 ARM_LIB=$PLATFORM/usr/lib
 ARM_LIBO=$PREBUILT/lib/gcc/arm-linux-androideabi/4.9
