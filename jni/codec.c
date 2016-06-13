@@ -19,8 +19,8 @@ typedef struct Jxcodec
 
 jlong 
 Java_com_smartvision_jxvideoh264_Jxaudio_create( JNIEnv *env,
-									 jobject this,
-									 jint type)
+												jobject this,
+												jint type)
 {
   Jxcodec * encoder = NULL;
   encoder = malloc( sizeof (Jxcodec));
@@ -32,12 +32,12 @@ Java_com_smartvision_jxvideoh264_Jxaudio_create( JNIEnv *env,
 
 jint 
 Java_com_smartvision_jxvideoh264_Jxaudio_decode(JNIEnv *env,
-									 jobject this,
-									 jlong handle,
-									 jbyteArray input,
-									 jint input_buffer_size,
-									 jbyteArray output,
-									 jint output_buffer_size)
+												jobject this,
+												jlong handle,
+												jbyteArray input,
+												jint input_buffer_size,
+												jbyteArray output,
+												jint output_buffer_size)
 {
   Jxcodec *codec = (Jxcodec*)handle;
   int out_size = output_buffer_size,bytes = 0;
@@ -46,8 +46,8 @@ Java_com_smartvision_jxvideoh264_Jxaudio_decode(JNIEnv *env,
 
 jint 
 Java_com_smartvision_jxvideoh264_Jxaudio_destroy(JNIEnv *env,
-									  jobject this,
-									  jlong handle)
+												 jobject this,
+												 jlong handle)
 {
   Jxcodec * codec = (Jxcodec*)handle;
   if ( codec != NULL )
@@ -61,13 +61,13 @@ Java_com_smartvision_jxvideoh264_Jxaudio_destroy(JNIEnv *env,
 
 jlong 
 Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
-									 jobject this,
-									 jint type,
-									 jint rate,
-									 jint width,
-									 jint height,
-									 jint fps,
-									 jint gop)
+												jobject this,
+												jint type,
+												jint rate,
+												jint width,
+												jint height,
+												jint fps,
+												jint gop)
 {
 
 
@@ -83,7 +83,8 @@ Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
 	return 0;
   encoder->param = (x264_param_t*)malloc(sizeof(x264_param_t));
   encoder->picture = (x264_picture_t*)malloc(sizeof(x264_picture_t));
-  x264_param_default(encoder->param);
+  //x264_param_default(encoder->param);
+  x264_param_default_preset(encoder->param, "fast" , "zerolatency" );
   x264_param_apply_profile(encoder->param,"baseline");
   encoder->param->i_log_level = X264_LOG_NONE;
   encoder->param->i_width = width;
@@ -94,6 +95,7 @@ Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
   encoder->param->i_fps_den = 1;
   encoder->param->i_keyint_max = gop;
   encoder->param->rc.i_bitrate = rate/1000;
+  encoder->param->b_repeat_headers = 1;
   encoder->param->b_annexb = 1;
 
   if ((encoder->handle = x264_encoder_open(encoder->param))==0)
@@ -110,11 +112,11 @@ Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
   return (jlong)encoder;
 }
 jint Java_com_smartvision_jxvideoh264_Jxcodec_encode(JNIEnv *env,
-										  jobject this,
-										  jlong handle,
-										  jbyteArray input,
-										  jbyteArray output,
-										  jint output_buffer_size)
+													 jobject this,
+													 jlong handle,
+													 jbyteArray input,
+													 jbyteArray output,
+													 jint output_buffer_size)
 {
   Jxcodec * codec = (Jxcodec*)handle;
 
@@ -127,7 +129,7 @@ jint Java_com_smartvision_jxvideoh264_Jxcodec_encode(JNIEnv *env,
   unsigned char * y = codec->picture->img.plane[0];
   unsigned char * u = codec->picture->img.plane[2];
   unsigned char * v = codec->picture->img.plane[1];
-
+  unsigned char * buff = out_buf;
   memcpy(y,yuv,linesize);
   for ( i=0 ; i < linesize / 4  ; i++ )
 	{
@@ -141,9 +143,10 @@ jint Java_com_smartvision_jxvideoh264_Jxcodec_encode(JNIEnv *env,
 	  return 0; 
   }
   for( i = 0 ; i < n_nal ; i++ ){
-	memcpy(out_buf,codec->nal[i].p_payload,codec->nal[i].i_payload);
-	out_buf+codec->nal[i].i_payload;
-	bytes+=codec->nal[i].i_payload;
+	  LOGI("x264 encode nal %d,payload size %d",n_nal,codec->nal[i].i_payload);	
+	  memcpy(buff,codec->nal[i].p_payload,codec->nal[i].i_payload);
+	  buff+=codec->nal[i].i_payload;
+	  bytes+=codec->nal[i].i_payload;
   }
   (*env)->ReleaseByteArrayElements(env,input,yuv,0);
   (*env)->ReleaseByteArrayElements(env,output,out_buf,0);
@@ -151,8 +154,8 @@ jint Java_com_smartvision_jxvideoh264_Jxcodec_encode(JNIEnv *env,
 }
 
 jint Java_com_smartvision_jxvideoh264_Jxcodec_destroy(JNIEnv *env,
-										   jobject this,
-										   jlong handle)
+													  jobject this,
+													  jlong handle)
 {
   Jxcodec * codec = (Jxcodec*)handle;
   if ( codec != NULL )
