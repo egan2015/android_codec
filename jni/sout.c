@@ -97,6 +97,7 @@ void send_thread( void * arg)
 		{
 			int i_buffer = p_block_in->i_buffer;
 			unsigned char * pbuffer = p_block_in->p_buffer;
+			#if 0
 			while(i_buffer)
 			{
 				int i_copy = __MIN ( TS_SENDER_BUFFER_SIZE - i_pos , i_buffer );
@@ -112,6 +113,9 @@ void send_thread( void * arg)
 					//LOGI("Jxstreaming send to %d",bytes );
 				}
 			}	
+			#else
+			int bytes = send(p_sout->fd_udp,pbuffer,i_buffer,0);
+			#endif
 		}
 		block_Release(p_block_in);			
 		pthread_mutex_lock(&p_sout->lock);
@@ -190,11 +194,14 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_createVideoEncoder(JNIEnv * env,
 	p_enc->picture = (x264_picture_t*)malloc(sizeof(x264_picture_t));
 	//x264_param_default(p_enc->param);
 	x264_param_default_preset(p_enc->param, "fast" , "zerolatency" );
-	x264_param_apply_profile(p_enc->param,"baseline");
+	x264_param_apply_profile(p_enc->param,"main");
+
 	p_enc->param->i_log_level = X264_LOG_NONE;
 	p_enc->param->i_width = width;
 	p_enc->param->i_height = height;
-	p_enc->param->rc.i_lookahead = 0;
+	
+//	p_enc->param->rc.i_lookahead = 0;
+
 	#if USE_YUV_NV12
 	p_enc->param->i_csp = X264_CSP_NV21;
 	#else
@@ -202,8 +209,16 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_createVideoEncoder(JNIEnv * env,
 	#endif
 	p_enc->param->i_fps_num = fps;
 	p_enc->param->i_fps_den = 1;
-	p_enc->param->i_keyint_max = gop;
+	
+	p_enc->param->rc.b_mb_tree = 0;
+	p_enc->param->i_keyint_max = fps * 2 ;
+	
+//	p_enc->param->rc.f_rf_constant = 25; 
+//	p_enc->param->rc.f_rf_constant_max = 45;
+	
 	p_enc->param->rc.i_bitrate = rate/1000;
+	p_enc->param->rc.i_rc_method = X264_RC_CRF;
+	p_enc->param->rc.i_vbv_max_bitrate=(int)((rate*1.2)/1000) ;
 	p_enc->param->b_repeat_headers = 1;
 	p_enc->f_fps = fps;
 	p_enc->param->b_annexb = 1;
@@ -242,8 +257,6 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_createVideoEncoder(JNIEnv * env,
 		for( i = 0; i < i_nal; i++ )
 		{
 
-			int i_size;
-//			x264_nal_encode(p_enc->fmt_out.p_extra + bytes , 1 , &nal[i]);
 			memcpy(p_enc->fmt_out.p_extra + bytes , nal[i].p_payload,nal[i].i_payload);
 		    bytes+=nal[i].i_payload;
 		    LOGI("xh264 encode header %d,encode nal %d",p_enc->fmt_out.i_extra
@@ -298,17 +311,20 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
 	  (*env)->ReleaseByteArrayElements(env,input,yuv,0);
 	  return 0; 
   }
-//  LOGI("x264 encode %d",i_result);
+
   block_t *p_es = block_Alloc(i_result);
   for( i = 0 ; i < n_nal ; i++ ){
 	  memcpy(p_es->p_buffer + bytes, p_enc->p_nals[i].p_payload,p_enc->p_nals[i].i_payload);
 	  bytes+=p_enc->p_nals[i].i_payload;
   }
+  
   p_es->i_buffer = bytes;
   p_es->i_pts = VLC_TS_0 + p_enc->i_dts;
   p_es->i_dts = VLC_TS_0 + p_enc->i_dts;
   p_es->i_length = (int64_t)((double)1000000.0 / p_enc->f_fps );
+
   p_enc->i_dts += (int64_t)((double)1000000.0 / p_enc->f_fps );
+
   int i_h264_slice_type = pic_out.i_type;
 	if( i_h264_slice_type == H264_SLICE_TYPE_IDR || i_h264_slice_type == H264_SLICE_TYPE_I )
 		p_es->i_flags |= BLOCK_FLAG_TYPE_I;
@@ -321,8 +337,6 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
 	  sout_block_mux(p_enc->p_in,p_es);
   }else
 	block_Release(p_es);
-
-//  LOGI("x264 encode end");
 	
   (*env)->ReleaseByteArrayElements(env,input,yuv,0);
   return bytes;
