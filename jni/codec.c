@@ -115,6 +115,7 @@ Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
 #endif
   return (jlong)encoder;
 }
+
 jint Java_com_smartvision_jxvideoh264_Jxcodec_encode(JNIEnv *env,
 													 jobject this,
 													 jlong handle,
