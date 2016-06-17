@@ -2,6 +2,8 @@
 
 #include <pthread.h>
 #include <limits.h>
+#include <android/log.h>
+
 
 #include "tsmux.h"
 
@@ -24,6 +26,12 @@
 #include "bits.h"
 #include "pes.h"
 #include "csa.h"
+
+#ifndef LOG_TAG
+#define  LOG_TAG    "libjxcodec"
+#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+#endif
+
 
 #define MAX_PMT 64       /* Maximum number of programs. FIXME: I just chose an arbitary number. Where is the maximum in the spec? */
 #define MAX_PMT_PID 64       /* Maximum pids in each pmt.  FIXME: I just chose an arbitary number. Where is the maximum in the spec? */
@@ -383,21 +391,21 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
     if( p_sys->i_bitrate_min > 0 && p_sys->i_bitrate_max > 0 &&
         p_sys->i_bitrate_min > p_sys->i_bitrate_max )
     {
-		fprintf( stderr, "incompatible minimum and maximum bitrate, "
+		LOGI( "incompatible minimum and maximum bitrate, "
                  "disabling bitrate control\n" );
         p_sys->i_bitrate_min = 0;
         p_sys->i_bitrate_max = 0;
     }
     if( p_sys->i_bitrate_min > 0 || p_sys->i_bitrate_max > 0 )
     {
-        fprintf( stderr, "bmin and bmax no more supported "
+        LOGI( "bmin and bmax no more supported "
                  "(if you need them report it)\n" );
     }
 
     p_sys->i_shaping_delay = (int64_t)200 * 1000;
     if( p_sys->i_shaping_delay <= 0 )
     {
-        fprintf( stderr,
+        LOGI(
                  "invalid shaping (%"PRId64"ms) resetting to 200ms\n",
                  p_sys->i_shaping_delay / 1000 );
         p_sys->i_shaping_delay = 200000;
@@ -407,7 +415,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
     if( p_sys->i_pcr_delay <= 0 ||
         p_sys->i_pcr_delay >= p_sys->i_shaping_delay )
     {
-        fprintf( stderr,
+        LOGI(
                  "invalid pcr delay (%"PRId64"ms) resetting to 70ms\n",
                  p_sys->i_pcr_delay / 1000 );
         p_sys->i_pcr_delay = 70000;
@@ -415,7 +423,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
 
     p_sys->i_dts_delay = (int64_t)400 * 1000;
 
-    fprintf( stderr, "shaping=%"PRId64" pcr=%"PRId64" dts_delay=%"PRId64"\n",
+    LOGI( "shaping=%"PRId64" pcr=%"PRId64" dts_delay=%"PRId64"\n",
              p_sys->i_shaping_delay, p_sys->i_pcr_delay, p_sys->i_dts_delay );
 
     p_sys->b_use_key_frames = false;
@@ -431,6 +439,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
     
     p_sys->i_nb_inputs = 0;
 	
+	LOGI("sout object create %d" ,p_sys->i_nb_inputs);
 	return p_sys;
 }
 
@@ -478,7 +487,7 @@ sout_input_t * soutAddStream( sout_mux_t* p_sys, es_format_t *p_fmt)
 	p_input->p_fifo = block_FifoNew();
 	
 	if ( !p_input->p_fifo ){
-		fprintf(stderr,"create sout input fifo error\n");
+		LOGI("create sout input fifo error\n");
 		
 		free( p_input);
 		return 0;
@@ -486,14 +495,14 @@ sout_input_t * soutAddStream( sout_mux_t* p_sys, es_format_t *p_fmt)
 	p_input->p_fmt = p_fmt;
 	if ( AddStream( p_sys, p_input ) != 0 ){
 		
-		fprintf(stderr,"create sout input fifo error\n");
+		LOGI("create sout input fifo error\n");
 		block_FifoRelease(p_input->p_fifo);
 		free(p_input);
 		return 0;
 	}
 	p_input->p_mux = p_sys;
 	p_sys->pp_inputs[p_sys->i_nb_inputs++] = p_input;
-	fprintf(stderr,"i_nb_inputs :%d\n",p_sys->i_nb_inputs);
+	LOGI("i_nb_inputs :%d\n",p_sys->i_nb_inputs);
 	return p_input;
 }
 
@@ -624,7 +633,7 @@ static int AddStream( sout_mux_t *p_mux, sout_input_t *p_input )
 
     if (p_stream->i_stream_type == -1)
     {
-        fprintf( stderr, "rejecting stream with unsupported codec %4.4s",
+        LOGI( "rejecting stream with unsupported codec %4.4s",
                   (char*)&p_stream->i_codec );
         free( p_stream );
         return VLC_EGENERIC;
@@ -635,7 +644,7 @@ static int AddStream( sout_mux_t *p_mux, sout_input_t *p_input )
     if( !p_stream->lang )
         goto oom;
 
-    fprintf( stderr, "adding input codec=%4.4s pid=%d\n",
+    LOGI( "adding input codec=%4.4s pid=%d\n",
              (char*)&p_stream->i_codec, p_stream->i_pid );
 
     for (int i = 0; i < p_stream->i_langs; i++) {
@@ -651,7 +660,7 @@ static int AddStream( sout_mux_t *p_mux, sout_input_t *p_input )
        // {
        //     memcpy(&p_stream->lang[i*4], code, 3);
        //     p_stream->lang[i*4+3] = 0x00; /* audio type: 0x00 undefined */
-       //     fprintf( stderr, "    - lang=%3.3s", &p_stream->lang[i*4] );
+       //     LOGI( "    - lang=%3.3s", &p_stream->lang[i*4] );
        // }
     }
 
@@ -735,7 +744,7 @@ static int AddStream( sout_mux_t *p_mux, sout_input_t *p_input )
         p_sys->i_pcr_pid   = p_stream->i_pid;
         p_sys->p_pcr_input = p_input;
 
-        fprintf( stderr, "new PCR PID is %d\n", p_sys->i_pcr_pid );
+        LOGI( "new PCR PID is %d\n", p_sys->i_pcr_pid );
     }
 
     return VLC_SUCCESS;
@@ -759,7 +768,7 @@ static int DelStream( sout_mux_t *p_mux, sout_input_t *p_input )
     ts_stream_t     *p_stream = (ts_stream_t*)p_input->p_sys;
     int              pid = 0;
 
-   fprintf( stderr, "removing input pid=%d\n", p_stream->i_pid );
+   LOGI( "removing input pid=%d\n", p_stream->i_pid );
 
     if( p_sys->i_pcr_pid == p_stream->i_pid )
     {
@@ -793,7 +802,7 @@ static int DelStream( sout_mux_t *p_mux, sout_input_t *p_input )
             /* Empty TS buffer */
             /* FIXME */
         }
-       fprintf( stderr, "new PCR PID is %d\n", p_sys->i_pcr_pid );
+       LOGI( "new PCR PID is %d\n", p_sys->i_pcr_pid );
     }
 
     /* Empty all data in chain_pes */
@@ -812,19 +821,19 @@ static int DelStream( sout_mux_t *p_mux, sout_input_t *p_input )
     if ( pid > 0 && pid == p_stream->i_pid )
     {
         p_sys->i_pid_video = pid;
-       fprintf( stderr, "freeing video PID %d", pid);
+       LOGI( "freeing video PID %d", pid);
     }
 //    pid = var_GetInteger( p_mux, SOUT_CFG_PREFIX "pid-audio" );
     if ( pid > 0 && pid == p_stream->i_pid )
     {
         p_sys->i_pid_audio = pid;
-       fprintf( stderr, "freeing audio PID %d", pid);
+       LOGI( "freeing audio PID %d", pid);
     }
 //    pid = var_GetInteger( p_mux, SOUT_CFG_PREFIX "pid-spu" );
     if ( pid > 0 && pid == p_stream->i_pid )
     {
         p_sys->i_pid_spu = pid;
-       fprintf( stderr, "freeing spu PID %d", pid);
+       LOGI( "freeing spu PID %d", pid);
     }
 
     free( p_stream );
@@ -967,7 +976,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
               p_data->i_dts - 10000000 > p_stream->i_pes_dts +
               p_stream->i_pes_length ) )
         {
-            fprintf( stderr, "packet with too strange dts "
+            LOGI( "packet with too strange dts "
                       "(dts=%"PRId64",old=%"PRId64",pcr=%"PRId64")\n",
                       p_data->i_dts, p_stream->i_pes_dts,
                       p_pcr_stream->i_pes_dts );
@@ -1084,7 +1093,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
     const mtime_t i_pcr_length = p_pcr_stream->i_pes_length;
     p_pcr_stream->b_key_frame = 0;
 
-    fprintf( stderr, "starting muxing %lldms\n", i_pcr_length / 1000 ); 
+    LOGI( "starting muxing %lldms\n", i_pcr_length / 1000 ); 
     /* 2: calculate non accurate total size of muxed ts */
     int i_packet_count = 0;
     for (int i = 0; i < p_mux->i_nb_inputs; i++ )
@@ -1122,7 +1131,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
     GetPMT( p_mux, &chain_ts );
     int i_packet_pos = 0;
     i_packet_count += chain_ts.i_depth;
-    /* fprintf( stderr, "estimated pck=%d", i_packet_count ); */
+    /* LOGI( "estimated pck=%d", i_packet_count ); */
 
     const mtime_t i_pcr_dts = p_pcr_stream->i_pes_dts;
     for (;;)
@@ -1218,7 +1227,7 @@ static int Mux( sout_mux_t *p_mux )
         {
             block_FifoEmpty( p_mux->pp_inputs[i]->p_fifo );
         }
-        fprintf( stderr, "waiting for PCR streams" );
+        LOGI( "waiting for PCR streams" );
         return VLC_SUCCESS;
     }
 
@@ -1241,7 +1250,7 @@ static int Mux( sout_mux_t *p_mux )
         {
             block_FifoEmpty( p_mux->pp_inputs[i]->p_fifo );
         }
-        fprintf( stderr, "waiting for PCR streams" );
+        LOGI( "waiting for PCR streams" );
         return VLC_SUCCESS;
     }
     
@@ -1303,7 +1312,7 @@ static int Mux( sout_mux_t *p_mux )
                             ( p_input->p_fmt->i_cat == VIDEO_ES ) )
                         {
                             /* We need more data */
-                            fprintf(stderr,"We need more data \n");
+                            LOGI("We need more data \n");
                             return VLC_SUCCESS;
                         }
                         else if( block_FifoCount( p_input->p_fifo ) <= 0 )
@@ -1368,7 +1377,7 @@ static int Mux( sout_mux_t *p_mux )
                           p_data->i_dts - 10000000 > p_stream->i_pes_dts +
                           p_stream->i_pes_length ) )
                     {
-                        fprintf( stderr, "packet with too strange dts "
+                        LOGI( "packet with too strange dts "
                                   "(dts=%"PRId64",old=%"PRId64",pcr=%"PRId64")\n",
                                   p_data->i_dts, p_stream->i_pes_dts,
                                   p_pcr_stream->i_pes_dts );
@@ -1458,7 +1467,7 @@ static int Mux( sout_mux_t *p_mux )
                         if( p_stream->i_pes_dts == 0 )
                         {
                             p_stream->i_pes_dts = p_data->i_dts;
-                            fprintf( stderr, "set stream i_pes_dts %"PRId64"/%"PRId64"\n",
+                            LOGI( "set stream i_pes_dts %"PRId64"/%"PRId64"\n",
 							p_stream->i_pes_dts,p_data->i_dts);
                         }
 
@@ -1485,7 +1494,7 @@ static int Mux( sout_mux_t *p_mux )
                                   1, b_data_alignment, i_header_size,
                                   i_max_pes_size );
 						
-						fprintf(stderr,"EStoPES: %d\n",p_data->i_buffer);
+						LOGI("EStoPES: %d\n",p_data->i_buffer);
                         BufferChainAppend(&p_stream->chain_pes, p_data );
                         
                         if( p_sys->b_use_key_frames && p_stream == p_pcr_stream
@@ -1511,7 +1520,7 @@ static int Mux( sout_mux_t *p_mux )
         i_pcr_length   = p_pcr_stream->i_pes_length;
         p_pcr_stream->b_key_frame = 0;
 
-        fprintf( stderr, "starting muxing %lldms\n", i_pcr_length / 1000 );
+        LOGI( "starting muxing %lldms\n", i_pcr_length / 1000 );
         /* 2: calculate non accurate total size of muxed ts */
         i_packet_count = 0;
         for( i = 0; i < p_mux->i_nb_inputs; i++ )
@@ -1550,7 +1559,7 @@ static int Mux( sout_mux_t *p_mux )
         i_packet_pos = 0;
         i_packet_count += chain_ts.i_depth;
         
-        fprintf( stderr, "estimated pck=%d\n", i_packet_count ); 
+        LOGI( "estimated pck=%d\n", i_packet_count ); 
 
         for( ;; )
         {
@@ -1566,7 +1575,7 @@ static int Mux( sout_mux_t *p_mux )
             {
                 p_stream = (ts_stream_t*)p_mux->pp_inputs[i]->p_sys;
 
-				fprintf( stderr, "dts %"PRId64"/%"PRId64"\n",
+				LOGI( "dts %"PRId64"/%"PRId64"\n",
 						 p_stream->i_pes_dts,i_dts);
 						 
                 if( p_stream->i_pes_dts == 0 )
@@ -1585,7 +1594,7 @@ static int Mux( sout_mux_t *p_mux )
             
             if( i_stream == -1 || i_dts > i_pcr_dts + i_pcr_length )
             {
-				fprintf(stderr,"why brek %d \n",i_stream);
+				LOGI("why brek %d \n",i_stream);
                 break;
             }
             
@@ -1606,7 +1615,7 @@ static int Mux( sout_mux_t *p_mux )
             /* Build the TS packet */
             p_ts = TSNew( p_mux, p_stream, b_pcr );
             
-            fprintf(stderr,"TSNew :%d\n",i_packet_pos);
+            LOGI("TSNew :%d\n",i_packet_pos);
             if( p_sys->csa != NULL &&
                  (p_input->p_fmt->i_cat != AUDIO_ES || p_sys->b_crypt_audio) &&
                  (p_input->p_fmt->i_cat != VIDEO_ES || p_sys->b_crypt_video) )
@@ -1697,7 +1706,7 @@ static block_t *Add_ADTS( block_t *p_data, es_format_t *p_fmt )
 
     uint8_t *p_extra = p_fmt->p_extra;
 
-	fprintf(stderr,"Add_ADTS \n");
+	LOGI("Add_ADTS \n");
 
     if( !p_data || p_fmt->i_extra < 2 || !p_extra )
         return p_data; /* no data to construct the headers */
@@ -1787,7 +1796,7 @@ static void TSSchedule( sout_mux_t *p_mux, sout_buffer_chain_t *p_chain_ts,
             i++;
             i_new_dts = i_pcr_dts + i_pcr_length * i / i_packet_count;
         }
-        fprintf( stderr, "adjusting rate at %"PRId64"/%"PRId64" (%d/%d)",
+        LOGI( "adjusting rate at %"PRId64"/%"PRId64" (%d/%d)",
                  i_cut_dts - i_pcr_dts, i_pcr_length, new_chain.i_depth,
                  p_chain_ts->i_depth );
         if ( new_chain.i_depth )
@@ -1950,7 +1959,7 @@ static void GetPMTmpeg4(sout_mux_t *p_mux)
             bits_write( &bits, 8, 0x00 );
             bits_write( &bits, 6, 0x00 );
 
-            fprintf( stderr, "Unsupported stream_type => broken IOD" );
+            LOGI( "Unsupported stream_type => broken IOD" );
         }
         bits_write( &bits, 1,   0x00 );         /* UpStream */
         bits_write( &bits, 1,   0x01 );         /* reserved */
@@ -2232,7 +2241,7 @@ static void TSDate( sout_mux_t *p_mux, sout_buffer_chain_t *p_chain_ts,
                           / (uint64_t)(i_pcr_length / 1000);
         if ( p_sys->i_bitrate_max && p_sys->i_bitrate_max < i_bitrate )
         {
-           //fprintf( stderr, "max bitrate exceeded at %"PRId64
+           //LOGI( "max bitrate exceeded at %"PRId64
            //           " (%d bi/s for %d pkt in %"PRId64" us)",
            //           i_pcr_dts + p_sys->i_shaping_delay * 3 / 2 - mdate(),
            //           i_bitrate, i_packet_count, i_pcr_length);
@@ -2246,7 +2255,7 @@ static void TSDate( sout_mux_t *p_mux, sout_buffer_chain_t *p_chain_ts,
         i_pcr_length = i_packet_count;
     }
 
-    /* fprintf( stderr, "real pck=%d", i_packet_count ); */
+    /* LOGI( "real pck=%d", i_packet_count ); */
     for (int i = 0; i < i_packet_count; i++ )
     {
         block_t *p_ts = BufferChainGet( p_chain_ts );
@@ -2257,7 +2266,7 @@ static void TSDate( sout_mux_t *p_mux, sout_buffer_chain_t *p_chain_ts,
 
         if( p_ts->i_flags & BLOCK_FLAG_CLOCK )
         {
-            /* fprintf( stderr, "pcr=%lld ms", p_ts->i_dts / 1000 ); */
+            /* LOGI( "pcr=%lld ms", p_ts->i_dts / 1000 ); */
             TSSetPCR( p_ts, p_ts->i_dts - p_sys->i_dts_delay );
         }
         if( p_ts->i_flags & BLOCK_FLAG_SCRAMBLED )
