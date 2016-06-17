@@ -6,7 +6,8 @@
 #define  LOG_TAG    "libjxcodec"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define MAX_OUTPUT_BUFFER 100000
-#define USE_NV12 1
+
+#define USE_YUV_NV12 1
 
 typedef struct Jxcodec
 {
@@ -72,11 +73,6 @@ Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
 
 
   Jxcodec * encoder = NULL;
-#if USE_YUV422
-  int size = width * height;
-#else
-  int size = width * height * 2;
-#endif
   encoder = malloc( sizeof (Jxcodec));
 
   if ( encoder == NULL )
@@ -90,7 +86,11 @@ Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
   encoder->param->i_width = width;
   encoder->param->i_height = height;
   encoder->param->rc.i_lookahead = 0;
+#if USE_YUV_NV12
+  encoder->param->i_csp = X264_CSP_NV21;
+#else
   encoder->param->i_csp = X264_CSP_I420;
+#endif
   encoder->param->i_fps_num = fps;
   encoder->param->i_fps_den = 1;
   encoder->param->i_keyint_max = gop;
@@ -108,7 +108,11 @@ Java_com_smartvision_jxvideoh264_Jxcodec_create(JNIEnv * env,
 	  encoder->picture = 0;
 	  return 0;
 	}
+#if USE_YUV_NV12 
+  x264_picture_alloc( encoder->picture,X264_CSP_NV21,width,height);
+#else
   x264_picture_alloc( encoder->picture,X264_CSP_I420,width,height);
+#endif
   return (jlong)encoder;
 }
 jint Java_com_smartvision_jxvideoh264_Jxcodec_encode(JNIEnv *env,
@@ -126,16 +130,22 @@ jint Java_com_smartvision_jxvideoh264_Jxcodec_encode(JNIEnv *env,
   int linesize = codec->param->i_width * codec->param->i_height;
   unsigned char * out_buf = (unsigned char*)((jbyte*)(*env)->GetByteArrayElements(env,output,0));
   unsigned char * yuv = (unsigned char*)((jbyte*)(*env)->GetByteArrayElements(env,input,0));
+  unsigned char * buff = out_buf;
+#if USE_YUV_NV12
+  unsigned char *p = yuv;
+  codec->picture->img.plane[0]=p;
+  codec->picture->img.plane[1]=p+linesize;
+#else
   unsigned char * y = codec->picture->img.plane[0];
   unsigned char * u = codec->picture->img.plane[2];
   unsigned char * v = codec->picture->img.plane[1];
-  unsigned char * buff = out_buf;
   memcpy(y,yuv,linesize);
   for ( i=0 ; i < linesize / 4  ; i++ )
 	{
 	  *(u+i) = *(yuv+linesize+i*2);
 	  *(v+i) = *(yuv+linesize+i*2+1);
 	}
+#endif  
   codec->picture->i_type = X264_TYPE_AUTO;
   if ( x264_encoder_encode(codec->handle,&codec->nal,&n_nal,codec->picture,&pic_out)<0){
 	  (*env)->ReleaseByteArrayElements(env,input,yuv,0);
