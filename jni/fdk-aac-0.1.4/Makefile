@@ -251,23 +251,23 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4/missing --run aclocal-1.11
+ACLOCAL = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run aclocal-1.11
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
-AR = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ar
-AUTOCONF = ${SHELL} /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4/missing --run autoconf
-AUTOHEADER = ${SHELL} /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4/missing --run autoheader
-AUTOMAKE = ${SHELL} /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4/missing --run automake-1.11
+AR = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ar
+AUTOCONF = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run autoconf
+AUTOHEADER = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run autoheader
+AUTOMAKE = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run automake-1.11
 AWK = awk
-CC = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm
+CC = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm
 CCDEPMODE = depmode=gcc3
-CFLAGS = -O3 -mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__ --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm
-CPP = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm -E
+CFLAGS = -O3 -mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__ --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm
+CPP = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm -E
 CPPFLAGS = 
-CXX = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++ --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm
-CXXCPP = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++ --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm -E
+CXX = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++ --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm
+CXXCPP = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++ --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__ --sysroot=/opt/android-ndk-r11c//platforms/android-9/arch-arm
+CXXFLAGS = -O3 -mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__ --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm
 CYGPATH_W = echo
 DEFS = -DPACKAGE_NAME=\"fdk-aac\" -DPACKAGE_TARNAME=\"fdk-aac\" -DPACKAGE_VERSION=\"0.1.4\" -DPACKAGE_STRING=\"fdk-aac\ 0.1.4\" -DPACKAGE_BUGREPORT=\"http://sourceforge.net/projects/opencore-amr/\" -DPACKAGE_URL=\"\" -DPACKAGE=\"fdk-aac\" -DVERSION=\"0.1.4\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
 DEPDIR = .deps
@@ -297,10 +297,10 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4/missing --run makeinfo
+MAKEINFO = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = ./install-sh -c -d
-NM = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-nm
+NM = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-nm
 NMEDIT = 
 OBJDUMP = false
 OBJEXT = o
@@ -314,16 +314,16 @@ PACKAGE_TARNAME = fdk-aac
 PACKAGE_URL = 
 PACKAGE_VERSION = 0.1.4
 PATH_SEPARATOR = :
-RANLIB = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ranlib
+RANLIB = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ranlib
 SED = /usr/bin/sed
 SET_MAKE = 
 SHELL = /bin/sh
-STRIP = /opt/android-ndk-r11c//toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip
+STRIP = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-strip
 VERSION = 0.1.4
-abs_builddir = /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4
-abs_srcdir = /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4
-abs_top_builddir = /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4
-abs_top_srcdir = /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4
+abs_builddir = /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4
+abs_srcdir = /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4
+abs_top_builddir = /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4
+abs_top_srcdir = /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4
 ac_ct_AR = 
 ac_ct_CC = 
 ac_ct_CXX = 
@@ -353,7 +353,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /Users/firebolt/workspaces/android-codec/jni/fdk-aac-0.1.4/install-sh
+install_sh = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -362,7 +362,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(top_builddir)/./install-sh -c -d
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /Users/firebolt/workspaces/android-codec/jni/build/faac
+prefix = /Users/firebolt/workspaces/android_codec/jni/build/faac
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin

@@ -4,7 +4,7 @@ CROSS_PREFIX=$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/dar
 PLATFORM=$ANDROID_NDK_ROOT/platforms/android-9/arch-arm
 OPTIMIZE_CFLAGS="-mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__"
 
-./configure --prefix=/Users/firebolt/workspaces/android-codec/jni/build/faac \
+./configure --prefix=/Users/firebolt/workspaces/android_codec/jni/build/faac \
   --with-sysroot=$PLATFORM \
   --host=arm-linux \
   --enable-shared \
