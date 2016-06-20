@@ -258,7 +258,7 @@ AR = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-
 AUTOCONF = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run autoconf
 AUTOHEADER = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run autoheader
 AUTOMAKE = ${SHELL} /Users/firebolt/workspaces/android_codec/jni/fdk-aac-0.1.4/missing --run automake-1.11
-AWK = awk
+AWK = gawk
 CC = /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm
 CCDEPMODE = depmode=gcc3
 CFLAGS = -O3 -mfloat-abi=softfp -mfpu=vfpv3-d16 -marm -march=armv7-a -mthumb -D__thumb__ --sysroot=/opt/android-ndk-r11c/platforms/android-9/arch-arm

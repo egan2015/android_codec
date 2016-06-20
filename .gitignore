@@ -30,6 +30,7 @@
 
 # Debug files
 *.dSYM/
+<<<<<<< HEAD
 # Built application files
 *.apk
 *.ap_
@@ -91,3 +92,6 @@ captures/
 *.exe
 *.out
 *.app
+=======
+*.su
+>>>>>>> 336de417714191247c2c8a2d5d547680f5b3b2e9
