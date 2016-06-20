@@ -509,7 +509,13 @@ sout_input_t * soutAddStream( sout_mux_t* p_sys, es_format_t *p_fmt)
 int  soutDelStream( sout_mux_t* p_sys, sout_input_t * p_input )
 {
 	
-	return DelStream(p_sys, p_input) ;
+	DelStream(p_sys, p_input) ;	
+	block_FifoRelease(p_input->p_fifo);
+	free(p_input);
+//	p_sys->pp_inputs[p_sys->i_nb_inputs] = 0;
+//	p_sys->i_nb_inputs--;
+	LOGI("i_nb_inputs :%d\n",p_sys->i_nb_inputs);
+	return 0; 
 }
 
 /*****************************************************************************
