@@ -438,9 +438,13 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 		p_es->i_pts = VLC_TS_0 + p_sys->i_video_pts;
 		p_es->i_dts = VLC_TS_0 + p_sys->i_video_pts;
 		p_sys->i_video_pts+=p_sys->i_video_pts_increment;	
+<<<<<<< HEAD
 		p_es->i_flags|=h264_frame_type(p_es->p_buffer[4] & 0x1f);
 		
 		LOGI("Jxstreaming video mux :");
+=======
+		p_es->i_flags |= h264_frame_type(p_es->p_buffer[4] &0x1f);
+>>>>>>> b6d580a83d3117aefce92919722757a31cc79c81
 		
 	}
 	else if (p_sys->p_audio_input == p_input)	
