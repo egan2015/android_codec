@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <fcntl.h>
-
+#include <errno.h>
 
 #include "tsmux/tsmux.h"
 #include "tsmux/vlc_block.h"
@@ -63,6 +63,13 @@ typedef struct video_encoder_t
 	unsigned char * p_pic_uv;
 }video_encoder_t;
 
+#define MAX_RTP_TS_PACKET_SIZE ( 7 * 188 + 12 )
+typedef struct rtp_buffer_t
+{
+  unsigned char p_buffer[MAX_RTP_TS_PACKET_SIZE];
+  unsigned short i_buffer;
+}rtp_buffer_t;
+
 typedef struct sout_t
 {
 	int fd_udp;
@@ -75,21 +82,26 @@ typedef struct sout_t
 	sout_input_t *p_video_input;
 	sout_input_t *p_audio_input;
 	
+	es_format_t fmt_video_in;
+	es_format_t fmt_audio_in;
 	mtime_t i_audio_pts;
 	mtime_t i_video_pts;
 	mtime_t i_audio_pts_increment;
 	mtime_t i_video_pts_increment;
 
+	/**
+	 * rtp sender  
+	*/
+	unsigned long  i_rtp_ssrc;
+	unsigned short i_rtp_last_seq;
+	rtp_buffer_t   p_rtp_buffer;
+	mtime_t i_dts;	
+	
 	sout_mux_t * p_mux;	
 };
 
 
-#define MAX_RTP_TS_PACKET_SIZE ( 7 * 188 + 12 )
-typedef struct rtp_buffer_t
-{
-  unsigned char p_buffer[MAX_RTP_TS_PACKET_SIZE];
-  unsigned short i_buffer;
-}rtp_buffer_t;
+
 
 static inline
 unsigned long mdate(){
@@ -101,11 +113,67 @@ unsigned long mdate(){
 static void h264_ts_callback(void * p_private, unsigned char * p_ts_data , size_t i_size )
 {
 	sout_t * p_sout = (sout_t *) p_private;
+
+	int i_buffer = i_size;
+	unsigned char * pbuffer = p_ts_data;	
 	
-	block_t * p_ts = block_Alloc( i_size );
-	memcpy( p_ts->p_buffer,p_ts_data, i_size);
-	block_FifoPut(p_sout->p_fifo,p_ts);	
-//	fprintf( stderr , " Receive h264 ts stream :%d\n",i_size);
+	while(i_buffer)
+	{
+		int i_copy = __MIN ( MAX_RTP_TS_PACKET_SIZE - p_sout->p_rtp_buffer.i_buffer , i_buffer );
+		memcpy( (p_sout->p_rtp_buffer.p_buffer + p_sout->p_rtp_buffer.i_buffer), pbuffer , i_copy );
+		//printf("buffer %d , copy %d \n",i_buffer,i_copy);
+		uint32_t i_timestamp = p_sout->i_dts;
+		p_sout->p_rtp_buffer.p_buffer[0] = 0x80;
+		p_sout->p_rtp_buffer.p_buffer[1] = 0x80|33;
+		p_sout->p_rtp_buffer.p_buffer[2] = ( p_sout->i_rtp_last_seq >> 8)&0xff;
+		p_sout->p_rtp_buffer.p_buffer[3] = (  p_sout->i_rtp_last_seq     )&0xff;
+		p_sout->p_rtp_buffer.p_buffer[4] = ( i_timestamp >> 24 )&0xff;
+		p_sout->p_rtp_buffer.p_buffer[5] = ( i_timestamp >> 16 )&0xff;
+		p_sout->p_rtp_buffer.p_buffer[6] = ( i_timestamp >>  8 )&0xff;
+		p_sout->p_rtp_buffer.p_buffer[7] = ( i_timestamp       )&0xff;
+		memcpy( p_sout->p_rtp_buffer.p_buffer + 8, (unsigned char *)&p_sout->i_rtp_ssrc, 4 );
+  
+		p_sout->p_rtp_buffer.i_buffer += i_copy;
+		pbuffer += i_copy;
+		i_buffer -= i_copy;
+		if ( p_sout->p_rtp_buffer.i_buffer == MAX_RTP_TS_PACKET_SIZE )
+		{
+				/* Add a file descriptor to the set */
+		
+			block_t * p_ts = block_Alloc( p_sout->p_rtp_buffer.i_buffer );
+			memcpy( p_ts->p_buffer,p_sout->p_rtp_buffer.p_buffer
+					,p_sout->p_rtp_buffer.i_buffer);
+			p_ts->i_buffer = p_sout->p_rtp_buffer.i_buffer;
+			block_FifoPut(p_sout->p_fifo,p_ts);	
+	
+			p_sout->p_rtp_buffer.i_buffer = 12;
+			p_sout->i_rtp_last_seq++;
+			//LOGI("Jxstreaming send to %d",bytes );
+		}
+	}		
+	
+}
+
+static int wait_for_send( int sockfd, fd_set * wfds , struct timeval *tv ){
+	
+	
+	int s_rc;
+    while ((s_rc = select(sockfd+1, NULL, wfds, NULL, tv)) == -1) {
+        if (errno == EINTR) {
+            /* Necessary after an error */
+            FD_ZERO(wfds);
+            FD_SET(sockfd, wfds);
+        } else {
+            return -1;
+        }
+    }
+
+    if (s_rc == 0) {
+        /* Timeout */
+        errno = ETIMEDOUT;
+        return -1;
+    }
+    return s_rc;
 }
 
 void send_thread( void * arg)
@@ -116,6 +184,11 @@ void send_thread( void * arg)
 	unsigned char send_buffer[MAX_RTP_TS_PACKET_SIZE];
 	unsigned long  rtp_ssrc_ = rand();
 	unsigned short rtp_last_seq_ = rand();
+	int timeout = 1000;
+    struct timeval tv;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = ( timeout % 1000 ) * 1000;
+
 
 	pthread_mutex_lock(&p_sout->lock);
 	closed = p_sout->b_closed;
@@ -129,7 +202,7 @@ void send_thread( void * arg)
 		{
 			int i_buffer = p_block_in->i_buffer;
 			unsigned char * pbuffer = p_block_in->p_buffer;
-			#if 1
+			#if 0
 			while(i_buffer)
 			{
 				int i_copy = __MIN ( MAX_RTP_TS_PACKET_SIZE - i_pos , i_buffer );
@@ -151,15 +224,23 @@ void send_thread( void * arg)
 				i_buffer -= i_copy;
 				if ( i_pos == MAX_RTP_TS_PACKET_SIZE )
 				{
+					    /* Add a file descriptor to the set */
+					fd_set wfds;
+					FD_ZERO(&wfds);
+					FD_SET(p_sout->fd_udp, &wfds);
+					wait_for_send(p_sout->fd_udp, &wfds,&tv); 
 					int bytes = send(p_sout->fd_udp,send_buffer,i_pos,0); 
 					i_pos = 12;
 					//LOGI("Jxstreaming send to %d",bytes );
+					rtp_last_seq_++;
 				}
 			}	
 			#else
 			int bytes = send(p_sout->fd_udp,pbuffer,i_buffer,0);
-			#endif
+			//LOGI("Jxstreaming send to %d",bytes );
 			rtp_last_seq_++;
+			#endif
+			
 		}
 		block_Release(p_block_in);			
 		pthread_mutex_lock(&p_sout->lock);
@@ -195,11 +276,19 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 	
 	p_sys->p_video_input = NULL;
 	p_sys->p_audio_input = NULL;
-	p_sys->i_audio_pts = 0;
-	p_sys->i_video_pts = 0;
+	p_sys->i_audio_pts = VLC_TS_0;
+	p_sys->i_video_pts = VLC_TS_0;
 	p_sys->i_video_pts_increment = 0;
 	p_sys->i_audio_pts_increment = 0;
-
+	
+	/**
+	 * rtp setting 
+	 **/
+	p_sys->i_rtp_ssrc = VLC_CODEC_H264;
+	p_sys->i_rtp_last_seq = rand();
+	p_sys->p_rtp_buffer.i_buffer = 12;
+	p_sys->i_dts = VLC_TS_0;
+	
 	addr = (*env)->GetStringUTFChars(env, server, NULL);	
 	bzero(&addr_server,sizeof(addr_server));
 	addr_server.sin_family=AF_INET;
@@ -244,17 +333,17 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 														jint i_extra )
 {
 	sout_t * p_sout = (sout_t *)handle;
-	es_format_t fmt_in;
+	
 	sout_input_t * p_input = 0;
 	
 	unsigned char * p_extra = (unsigned char*)((jbyte*)(*env)->GetByteArrayElements(env,extra,0));
 	if ( type == TYPE_H264_VIDEO )
 	{
-		fmt_in.i_codec = VLC_CODEC_H264;
-		fmt_in.i_cat = VIDEO_ES; 
-		fmt_in.i_extra = i_extra;
-		fmt_in.p_extra = p_extra;
-		p_input = soutAddStream( p_sout->p_mux, &fmt_in);
+		p_sout->fmt_video_in.i_codec = VLC_CODEC_H264;
+		p_sout->fmt_video_in.i_cat = VIDEO_ES; 
+		p_sout->fmt_video_in.i_extra = i_extra;
+		p_sout->fmt_video_in.p_extra = p_extra;
+		p_input = soutAddStream( p_sout->p_mux, &p_sout->fmt_video_in);
 		p_sout->p_video_input = p_input;	
 		p_sout->i_video_pts_increment = (int64_t)((double)1000000.0 / frame_rate );	
 	}
@@ -263,18 +352,18 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 		unsigned char buf[2];
 
 		int i_profile=1, i_sample_rate_idx = 4, i_channels;
-		fmt_in.i_codec = VLC_CODEC_MP4A;
-		fmt_in.i_cat = AUDIO_ES; 
+		p_sout->fmt_audio_in.i_codec = VLC_CODEC_MP4A;
+		p_sout->fmt_audio_in.i_cat = AUDIO_ES; 
 		
-		fmt_in.i_extra = 2;
-		fmt_in.p_extra = buf;
+		p_sout->fmt_audio_in.i_extra = 2;
+		p_sout->fmt_audio_in.p_extra = buf;
 		
-		 ((uint8_t *)fmt_in.p_extra)[0] =
+		 ((uint8_t *)p_sout->fmt_audio_in.p_extra)[0] =
             (i_profile + 1) << 3 | (i_sample_rate_idx >> 1);
-        ((uint8_t *)fmt_in.p_extra)[1] =
+        ((uint8_t *)p_sout->fmt_audio_in.p_extra)[1] =
             ((i_sample_rate_idx & 0x01) << 7) | (i_channels <<3);
 		
-		p_input = soutAddStream( p_sout->p_mux, &fmt_in);
+		p_input = soutAddStream( p_sout->p_mux, &p_sout->fmt_audio_in);
 		p_sout->p_audio_input = p_input;
 		
 	}    
@@ -437,14 +526,11 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 	{
 		p_es->i_pts = VLC_TS_0 + p_sys->i_video_pts;
 		p_es->i_dts = VLC_TS_0 + p_sys->i_video_pts;
-		p_sys->i_video_pts+=p_sys->i_video_pts_increment;	
-<<<<<<< HEAD
+		p_sys->i_dts = p_sys->i_video_pts+=p_sys->i_video_pts_increment;	
+
 		p_es->i_flags|=h264_frame_type(p_es->p_buffer[4] & 0x1f);
 		
-		LOGI("Jxstreaming video mux :");
-=======
-		p_es->i_flags |= h264_frame_type(p_es->p_buffer[4] &0x1f);
->>>>>>> b6d580a83d3117aefce92919722757a31cc79c81
+		//LOGI("Jxstreaming video mux :frame type %d , size %d",p_es->i_flags,p_es->i_buffer );
 		
 	}
 	else if (p_sys->p_audio_input == p_input)	
@@ -457,7 +543,7 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 		p_sys->i_audio_pts = p_sys->i_audio_pts_increment;	
 	}
 //	LOGI("Jxstreaming send :%d",i_frame_length);
-//	sout_block_mux( p_input, p_es );
+	sout_block_mux( p_input, p_es );
 	
 	(*env)->ReleaseByteArrayElements(env,p_frame,p_es_data,0);	
 	return i_frame_length;
@@ -508,7 +594,7 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
   p_es->i_dts = VLC_TS_0 + p_enc->i_dts;
   p_es->i_length = 0;//(int64_t)((double)1000000.0 / p_enc->f_fps );
 
-  p_enc->i_dts += (int64_t)((double)1000000.0 / p_enc->f_fps );
+  p_enc->p_sout->i_dts = p_enc->i_dts += (int64_t)((double)1000000.0 / p_enc->f_fps );
 
   int i_h264_slice_type = pic_out.i_type;
   if( i_h264_slice_type == H264_SLICE_TYPE_IDR || i_h264_slice_type == H264_SLICE_TYPE_I )

@@ -904,13 +904,15 @@ static bool MuxStreams(sout_mux_t *p_mux )
             continue;
 
 
-        /* Need more data */        
+        /* Need more data */       
+        //LOGI("mux fifo count %d", block_FifoCount( p_input->p_fifo )); 
         if( block_FifoCount( p_input->p_fifo ) <= 1 )
         {
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
                 ( p_input->p_fmt->i_cat == VIDEO_ES ) )
             {
                 /* We need more data */
+                //LOGI("We need more data" );
 			    return true;
             }
             else if( block_FifoCount( p_input->p_fifo ) <= 0 )
@@ -1099,7 +1101,8 @@ static bool MuxStreams(sout_mux_t *p_mux )
     const mtime_t i_pcr_length = p_pcr_stream->i_pes_length;
     p_pcr_stream->b_key_frame = 0;
 
-    LOGI( "starting muxing %lldms\n", i_pcr_length / 1000 ); 
+//	if ( i_pcr_length == 0 ) return true;
+    LOGI( "starting muxing %lld, %lldms\n", i_pcr_length , i_pcr_length / 1000 ); 
     /* 2: calculate non accurate total size of muxed ts */
     int i_packet_count = 0;
     for (int i = 0; i < p_mux->i_nb_inputs; i++ )
