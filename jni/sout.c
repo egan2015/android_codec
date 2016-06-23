@@ -300,7 +300,7 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 	
 	if(connect(p_sys->fd_udp,(struct sockaddr*)&addr_server,sizeof(addr_server))==-1)
 	{
-		LOGI("error in connecting");
+		LOGI("error in connecting %d",errno );
 		close(p_sys->fd_udp);
 	}	
 	
@@ -335,12 +335,14 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 	sout_t * p_sout = (sout_t *)handle;
 	
 	sout_input_t * p_input = 0;
+	unsigned char * p_extra = 0;
 	
-	unsigned char * p_extra = (unsigned char*)((jbyte*)(*env)->GetByteArrayElements(env,extra,0));
+	if ( i_extra )
+		p_extra = (unsigned char*)((jbyte*)(*env)->GetByteArrayElements(env,extra,0));
+	
 	if ( type == TYPE_H264_VIDEO )
 	{
-		p_sout->fmt_video_in.i_codec = VLC_CODEC_H264;
-		p_sout->fmt_video_in.i_cat = VIDEO_ES; 
+		es_format_Init(&p_sout->fmt_video_in,VIDEO_ES,VLC_CODEC_H264);
 		p_sout->fmt_video_in.i_extra = i_extra;
 		p_sout->fmt_video_in.p_extra = p_extra;
 		p_input = soutAddStream( p_sout->p_mux, &p_sout->fmt_video_in);
@@ -353,8 +355,8 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 		unsigned char buf[2];
 
 		int i_profile=1, i_sample_rate_idx = 4, i_channels;
-		p_sout->fmt_audio_in.i_codec = VLC_CODEC_MP4A;
-		p_sout->fmt_audio_in.i_cat = AUDIO_ES; 
+		
+		es_format_Init(&p_sout->fmt_audio_in,AUDIO_ES,VLC_CODEC_MP4A);
 		
 		p_sout->fmt_audio_in.i_extra = 2;
 		p_sout->fmt_audio_in.p_extra = buf;
@@ -369,7 +371,8 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 		LOGI("Jxstreaming audio stream\n");
 		
 	}    
-	(*env)->ReleaseByteArrayElements(env,extra,p_extra,0);
+	if ( p_extra )
+		(*env)->ReleaseByteArrayElements(env,extra,p_extra,0);
 	return (jlong) p_input;	
 }
 
@@ -444,9 +447,8 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_createVideoEncoder(JNIEnv * env,
 	
 	p_enc->i_dts = VLC_TS_0;
 	
-	p_enc->fmt_out.i_codec = VLC_CODEC_H264;
-	p_enc->fmt_out.i_cat = VIDEO_ES; 
 	
+	es_format_Init(&p_enc->fmt_out,VIDEO_ES,VLC_CODEC_H264);
 	int i, i_nal,bytes = 0;
 	x264_nal_t    *nal;
 	p_enc->fmt_out.i_extra = 4 * width,height + 1000 ;
@@ -538,10 +540,11 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 	else if (p_sys->p_audio_input == p_input)	
 	{
 		if (p_sys->i_audio_pts_increment == 0)
-			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * i_frame_length / ((44100*16*2)/8) );
+			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * 1024) / 44100;
 		
 		p_es->i_pts = VLC_TS_0 + p_sys->i_audio_pts;
 		p_es->i_dts = VLC_TS_0 + p_sys->i_audio_pts;	
+		p_es->i_length = p_sys->i_audio_pts_increment;
 		p_sys->i_audio_pts = p_sys->i_audio_pts_increment;	
 		//LOGI("Jxstreaming send :%d",i_frame_length);
 	}

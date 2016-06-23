@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <limits.h>
 #include <android/log.h>
-
+#include <errno.h>
 
 #include "tsmux.h"
 
@@ -218,6 +218,9 @@ struct sout_mux_t{
     bool            b_crypt_audio;
     bool            b_crypt_video;
     
+    bool 			b_waiting_stream;
+    mtime_t 		i_add_stream_start;
+    
     void (*p_access)(void* p_private ,unsigned char * p_ts_data , size_t i_size  );
     void 		   *p_private;
     
@@ -323,6 +326,9 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
 
 	p_sys->p_access = callback;
 	p_sys->p_private = p_private;
+	
+	p_sys->b_waiting_stream = true;
+	p_sys->i_add_stream_start = -1;
 	
     p_sys->i_audio_bound = 0;
     p_sys->i_video_bound = 0;
@@ -477,11 +483,32 @@ int  sout_stream_mux( sout_input_t * p_input, unsigned char * p_es_data , uint16
 int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
 {
 	
+	sout_mux_t *p_mux = ( sout_mux_t *)p_input->p_mux; 
+	mtime_t i_dts = p_nal->i_dts;
 	block_FifoPut( p_input->p_fifo,p_nal);
 	
     LOGI("Jxstream put %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
 				block_FifoCount( p_input->p_fifo ));	
-	return Mux(p_input->p_mux);	
+	
+	if( p_mux->b_waiting_stream )
+    {
+        const int64_t i_caching = DEFAULT_PTS_DELAY ;
+
+        if( p_mux->i_add_stream_start < 0 )
+            p_mux->i_add_stream_start = i_dts;
+
+        /* Wait until we have enought data before muxing */
+        if( p_mux->i_add_stream_start < 0 ||
+            i_dts < p_mux->i_add_stream_start + i_caching )
+            return VLC_SUCCESS;
+        p_mux->b_waiting_stream = false;
+    }
+    
+//	pthread_mutex_lock(&p_mux->lock);			
+	Mux(p_input->p_mux);	
+//	pthread_mutex_unlock(&p_mux->lock);
+				
+	return Mux(p_input->p_mux);
 }
 
 sout_input_t * soutAddStream( sout_mux_t* p_sys, es_format_t *p_fmt)
@@ -491,7 +518,7 @@ sout_input_t * soutAddStream( sout_mux_t* p_sys, es_format_t *p_fmt)
 	p_input->p_fifo = block_FifoNew();
 	
 	if ( !p_input->p_fifo ){
-		LOGI("create sout input fifo error\n");
+		LOGI("create sout input fifo error %d\n",errno);
 		
 		free( p_input);
 		return 0;
@@ -499,7 +526,7 @@ sout_input_t * soutAddStream( sout_mux_t* p_sys, es_format_t *p_fmt)
 	p_input->p_fmt = p_fmt;
 	if ( AddStream( p_sys, p_input ) != 0 ){
 		
-		LOGI("create sout input fifo error\n");
+		LOGI("AddStream error\n");
 		block_FifoRelease(p_input->p_fifo);
 		free(p_input);
 		return 0;
@@ -533,8 +560,10 @@ static int AddStream( sout_mux_t *p_mux, sout_input_t *p_input )
     ts_stream_t     *p_stream;
 
     p_input->p_sys = p_stream = calloc( 1, sizeof( ts_stream_t ) );
-    if( !p_stream )
+    if( !p_stream ){
+        LOGI(" calloc stream error %d",errno);
         goto oom;
+	}
 
     if ( p_sys->b_es_id_pid )
         p_stream->i_pid = p_input->p_fmt->i_id & 0x1fff;
@@ -653,8 +682,10 @@ static int AddStream( sout_mux_t *p_mux, sout_input_t *p_input )
 
     p_stream->i_langs = 1 + p_input->p_fmt->i_extra_languages;
     p_stream->lang = calloc(1, p_stream->i_langs * 4);
-    if( !p_stream->lang )
+    if( !p_stream->lang ){
+        LOGI(" calloc p_stream->langerror %d",errno);
         goto oom;
+	}
 
     LOGI( "adding input codec=%4.4s pid=%d\n",
              (char*)&p_stream->i_codec, p_stream->i_pid );
@@ -903,12 +934,21 @@ static bool MuxStreams(sout_mux_t *p_mux )
             p_input = p_mux->pp_inputs[i];
         ts_stream_t *p_stream = (ts_stream_t*)p_input->p_sys;
 
+		
         if( ( p_stream != p_pcr_stream ||
               p_stream->i_pes_length >= i_shaping_delay ) &&
             p_stream->i_pes_dts + p_stream->i_pes_length >=
-            p_pcr_stream->i_pes_dts + p_pcr_stream->i_pes_length )
+            p_pcr_stream->i_pes_dts + p_pcr_stream->i_pes_length ){
+			LOGI(" why %d , %s: stream pts: %"PRId64" ,stream length : %"PRId64" "
+			     " pcr pts: %"PRId64" , pcr length : %"PRId64" "
+				,i
+				,p_stream != p_pcr_stream ? "true" : "false"
+				,p_stream->i_pes_dts
+				,p_stream->i_pes_length
+				,p_pcr_stream->i_pes_dts
+				,p_pcr_stream->i_pes_length);	
             continue;
-
+		}
 
         /* Need more data */       
         LOGI("Jxstream get %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
@@ -921,7 +961,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
                 /* We need more data */
              //   LOGI("We need more data" );
 				
-			    //return true;
+			    return true;
             }
             else if( block_FifoCount( p_input->p_fifo ) <= 0 )
             {
@@ -1093,7 +1133,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
                        1, b_data_alignment, i_header_size,
                        i_max_pes_size );
 
-		LOGI("EStoPES: %d\n",p_data->i_buffer);
+		//LOGI("EStoPES: %d\n",p_data->i_buffer);
         BufferChainAppend( &p_stream->chain_pes, p_data );
 
         if( p_sys->b_use_key_frames && p_stream == p_pcr_stream
@@ -1251,7 +1291,6 @@ static int Mux( sout_mux_t *p_mux )
 
     while (!MuxStreams(p_mux))
         ;
-          
     return VLC_SUCCESS;
 }
 #else
