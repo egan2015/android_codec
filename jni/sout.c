@@ -346,6 +346,7 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 		p_input = soutAddStream( p_sout->p_mux, &p_sout->fmt_video_in);
 		p_sout->p_video_input = p_input;	
 		p_sout->i_video_pts_increment = (int64_t)((double)1000000.0 / frame_rate );	
+		LOGI("Jxstreaming video stream\n");
 	}
 	else
 	{
@@ -365,6 +366,7 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 		
 		p_input = soutAddStream( p_sout->p_mux, &p_sout->fmt_audio_in);
 		p_sout->p_audio_input = p_input;
+		LOGI("Jxstreaming audio stream\n");
 		
 	}    
 	(*env)->ReleaseByteArrayElements(env,extra,p_extra,0);
@@ -536,11 +538,12 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 	else if (p_sys->p_audio_input == p_input)	
 	{
 		if (p_sys->i_audio_pts_increment == 0)
-			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * i_frame_length / 44100 );
+			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * i_frame_length / ((44100*16*2)/8) );
 		
 		p_es->i_pts = VLC_TS_0 + p_sys->i_audio_pts;
 		p_es->i_dts = VLC_TS_0 + p_sys->i_audio_pts;	
 		p_sys->i_audio_pts = p_sys->i_audio_pts_increment;	
+		//LOGI("Jxstreaming send :%d",i_frame_length);
 	}
 //	LOGI("Jxstreaming send :%d",i_frame_length);
 	sout_block_mux( p_input, p_es );
@@ -605,7 +608,9 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
 		p_es->i_flags |= BLOCK_FLAG_TYPE_B;
 
   if ( p_enc->p_in ){
+	  
 	  sout_block_mux(p_enc->p_in,p_es);
+//	  LOGI("encode video %d\n",p_es->i_buffer);
   }else
 	block_Release(p_es);
 	

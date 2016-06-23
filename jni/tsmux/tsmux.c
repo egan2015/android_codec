@@ -164,7 +164,7 @@ struct sout_mux_t{
     sout_input_t    *p_pcr_input;
 
     pthread_mutex_t     csa_lock;
-
+	pthread_mutex_t     lock;
     int             i_audio_bound;
     int             i_video_bound;
     
@@ -315,7 +315,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
     p_sys->dvbpmt = NULL;
     memset( &p_sys->pmtmap, 0, sizeof(p_sys->pmtmap) );
     pthread_mutex_init( &p_sys->csa_lock ,NULL);
-
+	pthread_mutex_init( &p_sys->lock,NULL);
     for ( i = 0; i < MAX_PMT; i++ )
         p_sys->sdt_descriptors[i].psz_service_name
             = p_sys->sdt_descriptors[i].psz_provider = NULL;
@@ -454,6 +454,7 @@ void soutClose( sout_mux_t * p_sys )
     }
 
     pthread_mutex_destroy( &p_sys->csa_lock );
+    pthread_mutex_destroy(&p_sys->lock);
     free( p_sys->dvbpmt );
     free( p_sys );	
 }
@@ -475,8 +476,11 @@ int  sout_stream_mux( sout_input_t * p_input, unsigned char * p_es_data , uint16
 
 int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
 {
+	
 	block_FifoPut( p_input->p_fifo,p_nal);
 	
+    LOGI("Jxstream put %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
+				block_FifoCount( p_input->p_fifo ));	
 	return Mux(p_input->p_mux);	
 }
 
@@ -501,8 +505,10 @@ sout_input_t * soutAddStream( sout_mux_t* p_sys, es_format_t *p_fmt)
 		return 0;
 	}
 	p_input->p_mux = p_sys;
+	pthread_mutex_lock(&p_sys->lock);
 	p_sys->pp_inputs[p_sys->i_nb_inputs++] = p_input;
 	LOGI("i_nb_inputs :%d\n",p_sys->i_nb_inputs);
+	pthread_mutex_unlock(&p_sys->lock);
 	return p_input;
 }
 
@@ -905,15 +911,17 @@ static bool MuxStreams(sout_mux_t *p_mux )
 
 
         /* Need more data */       
-        //LOGI("mux fifo count %d", block_FifoCount( p_input->p_fifo )); 
+        LOGI("Jxstream get %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
+				block_FifoCount( p_input->p_fifo )); 
         if( block_FifoCount( p_input->p_fifo ) <= 1 )
         {
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
                 ( p_input->p_fmt->i_cat == VIDEO_ES ) )
             {
                 /* We need more data */
-                //LOGI("We need more data" );
-			    return true;
+             //   LOGI("We need more data" );
+				
+			    //return true;
             }
             else if( block_FifoCount( p_input->p_fifo ) <= 0 )
             {
@@ -1085,6 +1093,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
                        1, b_data_alignment, i_header_size,
                        i_max_pes_size );
 
+		LOGI("EStoPES: %d\n",p_data->i_buffer);
         BufferChainAppend( &p_stream->chain_pes, p_data );
 
         if( p_sys->b_use_key_frames && p_stream == p_pcr_stream
@@ -1288,7 +1297,7 @@ static int Mux( sout_mux_t *p_mux )
         /* 1: get enough PES packet for all input */
 		//fprintf(stderr , "1: get enough PES packet for all input \n");
    
-   //   for( ;; )
+        for( ;; )
         {
             bool b_ok = true;
             block_t *p_data;
@@ -1314,14 +1323,14 @@ static int Mux( sout_mux_t *p_mux )
                       p_pcr_stream->i_pes_dts + p_pcr_stream->i_pes_length ) )
                 {
                     /* Need more data */
-                    
+                    LOGI("Jxstream get %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
+						block_FifoCount( p_input->p_fifo ));
                     if( block_FifoCount( p_input->p_fifo ) <= 1 )
                     {
                         if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
                             ( p_input->p_fmt->i_cat == VIDEO_ES ) )
                         {
                             /* We need more data */
-                            LOGI("We need more data \n");
                             return VLC_SUCCESS;
                         }
                         else if( block_FifoCount( p_input->p_fifo ) <= 0 )
@@ -1715,7 +1724,7 @@ static block_t *Add_ADTS( block_t *p_data, es_format_t *p_fmt )
 
     uint8_t *p_extra = p_fmt->p_extra;
 
-	LOGI("Add_ADTS \n");
+//	LOGI("Add_ADTS %d\n",p_data->i_buffer);
 
     if( !p_data || p_fmt->i_extra < 2 || !p_extra )
         return p_data; /* no data to construct the headers */
