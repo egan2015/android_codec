@@ -354,7 +354,7 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 	{
 		unsigned char buf[2];
 
-		int i_profile=1, i_sample_rate_idx = 4, i_channels;
+		int i_profile=2, i_sample_rate_idx = 4, i_channels=2;
 		
 		es_format_Init(&p_sout->fmt_audio_in,AUDIO_ES,VLC_CODEC_MP4A);
 		
@@ -540,12 +540,12 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 	else if (p_sys->p_audio_input == p_input)	
 	{
 		if (p_sys->i_audio_pts_increment == 0)
-			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * 1024) / 44100;
+			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * 2048) / 44100;
 		
 		p_es->i_pts = VLC_TS_0 + p_sys->i_audio_pts;
 		p_es->i_dts = VLC_TS_0 + p_sys->i_audio_pts;	
 		p_es->i_length = p_sys->i_audio_pts_increment;
-		p_sys->i_audio_pts = p_sys->i_audio_pts_increment;	
+		p_sys->i_audio_pts += p_sys->i_audio_pts_increment;	
 		//LOGI("Jxstreaming send :%d",i_frame_length);
 	}
 //	LOGI("Jxstreaming send :%d",i_frame_length);

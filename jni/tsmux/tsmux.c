@@ -489,7 +489,7 @@ int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
 	
     LOGI("Jxstream put %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
 				block_FifoCount( p_input->p_fifo ));	
-	
+	/*
 	if( p_mux->b_waiting_stream )
     {
         const int64_t i_caching = DEFAULT_PTS_DELAY ;
@@ -497,15 +497,16 @@ int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
         if( p_mux->i_add_stream_start < 0 )
             p_mux->i_add_stream_start = i_dts;
 
-        /* Wait until we have enought data before muxing */
+
+        LOGI("Wait until we have enought data before muxing");
         if( p_mux->i_add_stream_start < 0 ||
             i_dts < p_mux->i_add_stream_start + i_caching )
             return VLC_SUCCESS;
         p_mux->b_waiting_stream = false;
     }
-    
+*/    
 //	pthread_mutex_lock(&p_mux->lock);			
-	Mux(p_input->p_mux);	
+//	Mux(p_input->p_mux);	
 //	pthread_mutex_unlock(&p_mux->lock);
 				
 	return Mux(p_input->p_mux);
