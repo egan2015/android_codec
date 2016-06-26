@@ -119,6 +119,7 @@ struct block_t
     size_t      i_buffer;
     uint8_t     *p_buffer;
 
+	void * p_owner;
     /* Rudimentary support for overloading block (de)allocation. */
     block_free_t pf_release;
 };

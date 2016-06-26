@@ -76,9 +76,10 @@ typedef struct sout_t
 	bool b_closed;
 	pthread_mutex_t lock;
 	pthread_t thread;
+	pthread_t thread_mux;
 	video_encoder_t *p_video_enc;
 	block_fifo_t * p_fifo;
-
+	block_fifo_t * p_es_fifo;
 	sout_input_t *p_video_input;
 	sout_input_t *p_audio_input;
 	
@@ -176,6 +177,31 @@ static int wait_for_send( int sockfd, fd_set * wfds , struct timeval *tv ){
     return s_rc;
 }
 
+void mux_thread( void *arg)
+{
+	sout_t * p_sout = (sout_t*)arg;
+	bool closed = false;
+
+	pthread_mutex_lock(&p_sout->lock);
+	closed = p_sout->b_closed;
+	pthread_mutex_unlock(&p_sout->lock);
+	
+	LOGI("Jxstreaming mux thread started");
+	while(!closed)
+	{	
+		block_t *p_block_in = block_FifoGet(p_sout->p_es_fifo);	
+		if ( p_block_in && !(p_block_in->i_flags & BLOCK_FLAG_PREROLL) )
+		{
+			sout_block_mux(p_block_in->p_owner,p_block_in);
+		}else if ( p_block_in ) block_Release(p_block_in);
+		
+		pthread_mutex_lock(&p_sout->lock);
+		closed = p_sout->b_closed;
+		pthread_mutex_unlock(&p_sout->lock);
+	}
+	LOGI("Jxstreaming mux thread ended");
+}
+
 void send_thread( void * arg)
 {	
 	sout_t * p_sout = (sout_t*)arg;
@@ -237,7 +263,7 @@ void send_thread( void * arg)
 			}	
 			#else
 			int bytes = send(p_sout->fd_udp,pbuffer,i_buffer,0);
-			//LOGI("Jxstreaming send to %d",bytes );
+			LOGI("Jxstreaming send to %d",bytes );
 			rtp_last_seq_++;
 			#endif
 			
@@ -270,6 +296,7 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 		return 0;
 
 	p_sys->p_fifo = block_FifoNew();
+	p_sys->p_es_fifo = block_FifoNew();
 	
 	p_sys->p_mux = soutOpen(NULL,h264_ts_callback,p_sys);
 	p_sys->p_video_enc = NULL;
@@ -311,7 +338,7 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 	pthread_mutex_init(&p_sys->lock,NULL);
 	
 	pthread_create(&p_sys->thread,0,send_thread,(void*)p_sys);
-
+	pthread_create(&p_sys->thread_mux,0,mux_thread,(void*)p_sys);
 	LOGI("Jxstreaming create End");
 	
 	return (jlong)p_sys;
@@ -540,7 +567,7 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 	else if (p_sys->p_audio_input == p_input)	
 	{
 		if (p_sys->i_audio_pts_increment == 0)
-			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * 2048) / 44100;
+			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * 4096) / (44100 * 4);
 		
 		p_es->i_pts = VLC_TS_0 + p_sys->i_audio_pts;
 		p_es->i_dts = VLC_TS_0 + p_sys->i_audio_pts;	
@@ -549,7 +576,10 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 		//LOGI("Jxstreaming send :%d",i_frame_length);
 	}
 //	LOGI("Jxstreaming send :%d",i_frame_length);
-	sout_block_mux( p_input, p_es );
+
+	p_es->p_owner = p_input;
+	block_FifoPut(p_sys->p_es_fifo,p_es);
+	//sout_block_mux( p_input, p_es );
 	
 	(*env)->ReleaseByteArrayElements(env,p_frame,p_es_data,0);	
 	return i_frame_length;
@@ -599,7 +629,7 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
   p_es->i_pts = VLC_TS_0 + p_enc->i_dts;
   p_es->i_dts = VLC_TS_0 + p_enc->i_dts;
   p_es->i_length = 0;//(int64_t)((double)1000000.0 / p_enc->f_fps );
-
+  p_es->p_owner = p_enc->p_in;
   p_enc->p_sout->i_dts = p_enc->i_dts += (int64_t)((double)1000000.0 / p_enc->f_fps );
 
   int i_h264_slice_type = pic_out.i_type;
@@ -611,8 +641,8 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
 		p_es->i_flags |= BLOCK_FLAG_TYPE_B;
 
   if ( p_enc->p_in ){
-	  
-	  sout_block_mux(p_enc->p_in,p_es);
+	  block_FifoPut(p_enc->p_sout->p_es_fifo,p_es);
+	  //sout_block_mux(p_enc->p_in,p_es);
 //	  LOGI("encode video %d\n",p_es->i_buffer);
   }else
 	block_Release(p_es);
@@ -672,12 +702,15 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_destroy(JNIEnv *env,
 	{		
 	  block_t * p_end = block_Alloc(1);
 	  p_end->i_flags = BLOCK_FLAG_PREROLL;
-	  block_FifoPut(p_sout->p_fifo,p_end);	  
+	  block_FifoPut(p_sout->p_es_fifo,block_Duplicate(p_end));
+	  block_FifoPut(p_sout->p_fifo,p_end);
 	  pthread_mutex_lock(&p_sout->lock);
 	  p_sout->b_closed = true;
 	  pthread_mutex_unlock(&p_sout->lock);
+	  pthread_join(p_sout->thread_mux,NULL);
 	  pthread_join(p_sout->thread,NULL);
 	  block_FifoRelease(p_sout->p_fifo);
+	  block_FifoRelease(p_sout->p_es_fifo);
 	  pthread_mutex_destroy(&p_sout->lock);
 	  LOGI("Jxstreaming destroy send thread ended");
 	  	  

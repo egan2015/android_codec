@@ -940,7 +940,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
               p_stream->i_pes_length >= i_shaping_delay ) &&
             p_stream->i_pes_dts + p_stream->i_pes_length >=
             p_pcr_stream->i_pes_dts + p_pcr_stream->i_pes_length ){
-			LOGI(" why %d , %s: stream pts: %"PRId64" ,stream length : %"PRId64" "
+/*			LOGI(" why %d , %s: stream pts: %"PRId64" ,stream length : %"PRId64" "
 			     " pcr pts: %"PRId64" , pcr length : %"PRId64" "
 				,i
 				,p_stream != p_pcr_stream ? "true" : "false"
@@ -948,6 +948,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
 				,p_stream->i_pes_length
 				,p_pcr_stream->i_pes_dts
 				,p_pcr_stream->i_pes_length);	
+*/
             continue;
 		}
 

@@ -72,6 +72,7 @@ void block_Init( block_t *restrict b, void *buf, size_t size )
     b->i_nb_samples = 0;
     b->p_buffer = buf;
     b->i_buffer = size;
+    b->p_owner = 0;
 #ifndef NDEBUG
     b->pf_release = BlockNoRelease;
 #endif
