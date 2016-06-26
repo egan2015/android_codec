@@ -189,7 +189,9 @@ void mux_thread( void *arg)
 	LOGI("Jxstreaming mux thread started");
 	while(!closed)
 	{	
+
 		block_t *p_block_in = block_FifoGet(p_sout->p_es_fifo);	
+		
 		if ( p_block_in && !(p_block_in->i_flags & BLOCK_FLAG_PREROLL) )
 		{
 			sout_block_mux(p_block_in->p_owner,p_block_in);
@@ -566,19 +568,22 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 	}
 	else if (p_sys->p_audio_input == p_input)	
 	{
-		if (p_sys->i_audio_pts_increment == 0)
-			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * 4096) / (44100 * 4);
+		if (p_sys->i_audio_pts_increment == 0){
+			p_sys->i_audio_pts_increment = (int64_t)((double)90000.0 * 1024) / 44100 ;
+		}
 		
 		p_es->i_pts = VLC_TS_0 + p_sys->i_audio_pts;
 		p_es->i_dts = VLC_TS_0 + p_sys->i_audio_pts;	
-		p_es->i_length = p_sys->i_audio_pts_increment;
+		//p_es->i_length = p_sys->i_audio_pts_increment;
 		p_sys->i_audio_pts += p_sys->i_audio_pts_increment;	
 		//LOGI("Jxstreaming send :%d",i_frame_length);
 	}
 //	LOGI("Jxstreaming send :%d",i_frame_length);
 
 	p_es->p_owner = p_input;
+	pthread_mutex_lock(&p_sys->lock);
 	block_FifoPut(p_sys->p_es_fifo,p_es);
+	pthread_mutex_unlock(&p_sys->lock);
 	//sout_block_mux( p_input, p_es );
 	
 	(*env)->ReleaseByteArrayElements(env,p_frame,p_es_data,0);	
@@ -641,7 +646,9 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
 		p_es->i_flags |= BLOCK_FLAG_TYPE_B;
 
   if ( p_enc->p_in ){
+	  pthread_mutex_lock(&p_enc->p_sout->lock);
 	  block_FifoPut(p_enc->p_sout->p_es_fifo,p_es);
+	  pthread_mutex_unlock(&p_enc->p_sout->lock);
 	  //sout_block_mux(p_enc->p_in,p_es);
 //	  LOGI("encode video %d\n",p_es->i_buffer);
   }else

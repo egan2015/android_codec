@@ -548,8 +548,8 @@ int  soutDelStream( sout_mux_t* p_sys, sout_input_t * p_input )
 	DelStream(p_sys, p_input) ;	
 	block_FifoRelease(p_input->p_fifo);
 	free(p_input);
-//	p_sys->pp_inputs[p_sys->i_nb_inputs] = 0;
-//	p_sys->i_nb_inputs--;
+	p_sys->pp_inputs[p_sys->i_nb_inputs] = 0;
+	p_sys->i_nb_inputs--;
 	LOGI("i_nb_inputs :%d\n",p_sys->i_nb_inputs);
 	return 0; 
 }
@@ -942,7 +942,8 @@ static bool MuxStreams(sout_mux_t *p_mux )
               p_stream->i_pes_length >= i_shaping_delay ) &&
             p_stream->i_pes_dts + p_stream->i_pes_length >=
             p_pcr_stream->i_pes_dts + p_pcr_stream->i_pes_length ){
-/*			LOGI(" why %d , %s: stream pts: %"PRId64" ,stream length : %"PRId64" "
+				
+			LOGI(" why %d , %s: stream pts: %"PRId64" ,stream length : %"PRId64" "
 			     " pcr pts: %"PRId64" , pcr length : %"PRId64" "
 				,i
 				,p_stream != p_pcr_stream ? "true" : "false"
@@ -950,13 +951,14 @@ static bool MuxStreams(sout_mux_t *p_mux )
 				,p_stream->i_pes_length
 				,p_pcr_stream->i_pes_dts
 				,p_pcr_stream->i_pes_length);	
-*/
+		
             continue;
+            
 		}
 
         /* Need more data */       
-        LOGI("Jxstream get %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
-				block_FifoCount( p_input->p_fifo )); 
+        LOGI("Jxstream get %s fifo count %d , inputs :%d , i = %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
+				block_FifoCount( p_input->p_fifo ),p_mux->i_nb_inputs,i); 
         if( block_FifoCount( p_input->p_fifo ) <= 1 )
         {
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
