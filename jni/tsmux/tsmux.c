@@ -505,10 +505,12 @@ int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
         p_mux->b_waiting_stream = false;
     }
 */    
-//	pthread_mutex_lock(&p_mux->lock);			
-//	Mux(p_input->p_mux);	
-//	pthread_mutex_unlock(&p_mux->lock);
-				
+	pthread_mutex_lock(&p_mux->lock);			
+	Mux(p_input->p_mux);	
+	pthread_mutex_unlock(&p_mux->lock);
+
+	return 0;
+	
 	return Mux(p_input->p_mux);
 }
 
@@ -913,7 +915,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
         : p_sys->i_shaping_delay;
 
     bool b_ok = true;
-
+	bool b_has_muxed = false;
     /* Accumulate enough data in the pcr stream (>i_shaping_delay) */
     /* Accumulate enough data in all other stream ( >= length of pcr)*/
 
@@ -962,7 +964,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
             {
                 /* We need more data */
              //   LOGI("We need more data" );
-				
+                // continue;
 			    return true;
             }
             else if( block_FifoCount( p_input->p_fifo ) <= 0 )
@@ -1138,6 +1140,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
 		//LOGI("EStoPES: %d\n",p_data->i_buffer);
         BufferChainAppend( &p_stream->chain_pes, p_data );
 
+		b_has_muxed = true;
         if( p_sys->b_use_key_frames && p_stream == p_pcr_stream
             && (p_data->i_flags & BLOCK_FLAG_TYPE_I)
             && !(p_data->i_flags & BLOCK_FLAG_NO_KEYFRAME)
@@ -1148,6 +1151,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
         }
     }
 
+	if ( ! b_has_muxed ) return true;
     /* save */
     const mtime_t i_pcr_length = p_pcr_stream->i_pes_length;
     p_pcr_stream->b_key_frame = 0;
