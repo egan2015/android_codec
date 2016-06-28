@@ -8,6 +8,7 @@ LOCAL_SRC_FILES := codec.c \
 				   tsmux/block.c \
 				   tsmux/pes.c \
 				   tsmux/csa.c \
+				   tsmux/mtime.c \
 				   tsmux/tsmux.c
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/build/x264/include \

@@ -339,7 +339,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
     p_sys->pat.i_continuity_counter = 0;
     p_sys->pat.b_discontinuity = false;
     p_sys->i_tsid = 0;
-    
+    p_sys->first_dts = 0;
     p_sys->i_netid = 0;
 
     p_sys->i_pmt_version_number = 0;
@@ -408,7 +408,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
                  "(if you need them report it)\n" );
     }
 
-    p_sys->i_shaping_delay = (int64_t)200 * 1000;
+    p_sys->i_shaping_delay = (int64_t)300 * 1000;
     if( p_sys->i_shaping_delay <= 0 )
     {
         LOGI(
@@ -432,7 +432,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
     LOGI( "shaping=%"PRId64" pcr=%"PRId64" dts_delay=%"PRId64"\n",
              p_sys->i_shaping_delay, p_sys->i_pcr_delay, p_sys->i_dts_delay );
 
-    p_sys->b_use_key_frames = false;
+    p_sys->b_use_key_frames = true;
 
     /* for TS generation */
     p_sys->i_pcr    = 0;
@@ -489,7 +489,7 @@ int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
 	
     LOGI("Jxstream put %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
 				block_FifoCount( p_input->p_fifo ));	
-	/*
+	
 	if( p_mux->b_waiting_stream )
     {
         const int64_t i_caching = DEFAULT_PTS_DELAY ;
@@ -504,7 +504,7 @@ int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
             return VLC_SUCCESS;
         p_mux->b_waiting_stream = false;
     }
-*/    
+   
 	pthread_mutex_lock(&p_mux->lock);			
 	Mux(p_input->p_mux);	
 	pthread_mutex_unlock(&p_mux->lock);
@@ -944,21 +944,22 @@ static bool MuxStreams(sout_mux_t *p_mux )
             p_pcr_stream->i_pes_dts + p_pcr_stream->i_pes_length ){
 				
 			LOGI(" why %d , %s: stream pts: %"PRId64" ,stream length : %"PRId64" "
-			     " pcr pts: %"PRId64" , pcr length : %"PRId64" "
+			     " pcr pts: %"PRId64" , pcr length : %"PRId64" i_shaping_delay :%"PRId64""
 				,i
 				,p_stream != p_pcr_stream ? "true" : "false"
 				,p_stream->i_pes_dts
 				,p_stream->i_pes_length
 				,p_pcr_stream->i_pes_dts
-				,p_pcr_stream->i_pes_length);	
-		
+				,p_pcr_stream->i_pes_length
+				,i_shaping_delay);	
+			
             continue;
             
 		}
 
         /* Need more data */       
-        LOGI("Jxstream get %s fifo count %d , inputs :%d , i = %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
-				block_FifoCount( p_input->p_fifo ),p_mux->i_nb_inputs,i); 
+//        LOGI("Jxstream get %s fifo count %d , inputs :%d , i = %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
+//				block_FifoCount( p_input->p_fifo ),p_mux->i_nb_inputs,i); 
         if( block_FifoCount( p_input->p_fifo ) <= 1 )
         {
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
@@ -1114,6 +1115,10 @@ static bool MuxStreams(sout_mux_t *p_mux )
         }
 
         p_stream->i_pes_length += p_data->i_length;
+        LOGI("Jxstream get %s i_pes_length %"PRId64" , i_length %"PRId64""
+				, p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio"
+				, p_stream->i_pes_length
+				, p_data->i_length); 
         if( p_stream->i_pes_dts == 0 )
         {
             p_stream->i_pes_dts = p_data->i_dts;

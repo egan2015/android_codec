@@ -90,6 +90,7 @@ typedef struct sout_t
 	mtime_t i_audio_pts_increment;
 	mtime_t i_video_pts_increment;
 
+	date_t          pts;
 	/**
 	 * rtp sender  
 	*/
@@ -100,16 +101,6 @@ typedef struct sout_t
 	
 	sout_mux_t * p_mux;	
 };
-
-
-
-
-static inline
-unsigned long mdate(){
-	struct timeval tv;
-	gettimeofday(&tv,0);
-	return tv.tv_sec*1000+tv.tv_usec/1000;
-}
 
 static void h264_ts_callback(void * p_private, unsigned char * p_ts_data , size_t i_size )
 {
@@ -265,7 +256,7 @@ void send_thread( void * arg)
 			}	
 			#else
 			int bytes = send(p_sout->fd_udp,pbuffer,i_buffer,0);
-			LOGI("Jxstreaming send to %d",bytes );
+			//LOGI("Jxstreaming send to %d",bytes );
 			rtp_last_seq_++;
 			#endif
 			
@@ -310,6 +301,8 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 	p_sys->i_video_pts_increment = 0;
 	p_sys->i_audio_pts_increment = 0;
 	
+	date_Init( &p_sys->pts, 44100, 1 );
+	date_Set( &p_sys->pts, 1 );
 	/**
 	 * rtp setting 
 	 **/
@@ -345,6 +338,35 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 	
 	return (jlong)p_sys;
 }
+
+static int h264_frame_type( int i_nal_type )
+{
+	int i_frame_type = i_nal_type;
+    /* slice_type */
+    switch( i_nal_type )
+    {
+    case 0: case 5:
+        i_frame_type = BLOCK_FLAG_TYPE_P;
+        break;
+    case 1: case 6:
+        i_frame_type = BLOCK_FLAG_TYPE_B;
+        break;
+    case 2: case 7:
+        i_frame_type = BLOCK_FLAG_TYPE_I;
+        break;
+    case 3: case 8: /* SP */
+        i_frame_type = BLOCK_FLAG_TYPE_P;
+        break;
+    case 4: case 9:
+        i_frame_type = BLOCK_FLAG_TYPE_I;
+        break;
+    default:
+        i_frame_type = 0;
+        break;
+    }
+	return i_frame_type;
+}
+
 
 static const int pi_sample_rates[16] =
 {
@@ -512,33 +534,6 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_createVideoEncoder(JNIEnv * env,
 	return (jlong)p_enc;  	 
 }
 
-static int h264_frame_type( int i_nal_type )
-{
-	int i_frame_type = i_nal_type;
-    /* slice_type */
-    switch( i_nal_type )
-    {
-    case 0: case 5:
-        i_frame_type = BLOCK_FLAG_TYPE_P;
-        break;
-    case 1: case 6:
-        i_frame_type = BLOCK_FLAG_TYPE_B;
-        break;
-    case 2: case 7:
-        i_frame_type = BLOCK_FLAG_TYPE_I;
-        break;
-    case 3: case 8: /* SP */
-        i_frame_type = BLOCK_FLAG_TYPE_P;
-        break;
-    case 4: case 9:
-        i_frame_type = BLOCK_FLAG_TYPE_I;
-        break;
-    default:
-        i_frame_type = 0;
-        break;
-    }
-	return i_frame_type;
-}
 
 jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 														jobject this,
@@ -569,13 +564,14 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 	else if (p_sys->p_audio_input == p_input)	
 	{
 		if (p_sys->i_audio_pts_increment == 0){
-			p_sys->i_audio_pts_increment = (int64_t)((double)90000.0 * 1024) / 44100 ;
+			p_sys->i_audio_pts_increment = (int64_t)((double)1000000.0 * 1024) / 44100 ;
 		}
 		
-		p_es->i_pts = VLC_TS_0 + p_sys->i_audio_pts;
-		p_es->i_dts = VLC_TS_0 + p_sys->i_audio_pts;	
+		p_es->i_dts=p_es->i_pts = VLC_TS_0 +  date_Get( &p_sys->pts );//p_sys->i_audio_pts;
+		//p_es->i_dts = VLC_TS_0 + p_sys->i_audio_pts;	
 		//p_es->i_length = p_sys->i_audio_pts_increment;
 		p_sys->i_audio_pts += p_sys->i_audio_pts_increment;	
+		date_Increment( &p_sys->pts, 1024 );
 		//LOGI("Jxstreaming send :%d",i_frame_length);
 	}
 //	LOGI("Jxstreaming send :%d",i_frame_length);
@@ -633,10 +629,11 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
   p_es->i_buffer = bytes;
   p_es->i_pts = VLC_TS_0 + p_enc->i_dts;
   p_es->i_dts = VLC_TS_0 + p_enc->i_dts;
-  p_es->i_length = 0;//(int64_t)((double)1000000.0 / p_enc->f_fps );
+  p_es->i_length = (int64_t)((double)1000000.0 / p_enc->f_fps );
   p_es->p_owner = p_enc->p_in;
   p_enc->p_sout->i_dts = p_enc->i_dts += (int64_t)((double)1000000.0 / p_enc->f_fps );
 
+/*
   int i_h264_slice_type = pic_out.i_type;
   if( i_h264_slice_type == H264_SLICE_TYPE_IDR || i_h264_slice_type == H264_SLICE_TYPE_I )
 		p_es->i_flags |= BLOCK_FLAG_TYPE_I;
@@ -644,7 +641,8 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
 		p_es->i_flags |= BLOCK_FLAG_TYPE_P;
   else if( i_h264_slice_type == H264_SLICE_TYPE_B )
 		p_es->i_flags |= BLOCK_FLAG_TYPE_B;
-
+*/
+  p_es->i_flags |= h264_frame_type(p_es->p_buffer[4] & 0x1f );
   if ( p_enc->p_in ){
 	  pthread_mutex_lock(&p_enc->p_sout->lock);
 	  block_FifoPut(p_enc->p_sout->p_es_fifo,p_es);

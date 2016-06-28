@@ -209,6 +209,7 @@ typedef struct sout_stream_sys_t sout_stream_sys_t;
 
 /* Misc */
 typedef struct iso639_lang_t iso639_lang_t;
+typedef struct date_t date_t;
 
 /* block */
 typedef struct block_t      block_t;
@@ -252,6 +253,7 @@ typedef struct block_fifo_t block_fifo_t;
 #   include <os2.h>
 #endif
 
+#include "vlc_mtime.h"
 
 
 /*****************************************************************************
