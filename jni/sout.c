@@ -405,7 +405,7 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 	{
 		unsigned char buf[2];
 
-		int i_profile=2, i_sample_rate_idx = 4, i_channels=2;
+		int i_profile=1, i_sample_rate_idx = 4, i_channels=1;
 		
 		es_format_Init(&p_sout->fmt_audio_in,AUDIO_ES,VLC_CODEC_MP4A);
 		
