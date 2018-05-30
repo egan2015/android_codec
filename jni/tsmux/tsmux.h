@@ -4,7 +4,7 @@
 #include "vlc_common.h"
 #include "vlc_es.h"
 
-typedef struct sout_mux_t  sout_mux_t;
+//typedef struct sout_mux_t  sout_mux_t;
 
 typedef struct ts_stream_t ts_stream_t;
 

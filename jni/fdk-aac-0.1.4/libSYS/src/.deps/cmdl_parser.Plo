@@ -1,84 +1,84 @@
 libSYS/src/cmdl_parser.lo: libSYS/src/cmdl_parser.cpp \
- /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdarg.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdio.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs_elf.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/android/api-level.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/types.h \
- /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stddef.h \
- /opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdint.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdint.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/_types.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/_types.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/posix_types.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/stddef.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/compiler.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/posix_types.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/types.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/types.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/kernel.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/sysmacros.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/string.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/malloc.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdlib.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/alloca.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/strings.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/memory.h \
- /opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/ctype.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdarg.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdio.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs_elf.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/android/api-level.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/types.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stddef.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdint.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdint.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/_types.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/_types.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/posix_types.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/stddef.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/compiler.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/posix_types.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/types.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/types.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/kernel.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/sysmacros.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/string.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/malloc.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdlib.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/alloca.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/strings.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/memory.h \
+ /Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/ctype.h \
  libSYS/include/cmdl_parser.h libSYS/include/machine_type.h \
  libSYS/include/genericStds.h
 
-/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdarg.h:
+/Volumes/Data/workspaces/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdarg.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdio.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdio.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs_elf.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/cdefs_elf.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/android/api-level.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/android/api-level.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/types.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/types.h:
 
-/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stddef.h:
+/Volumes/Data/workspaces/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stddef.h:
 
-/opt/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdint.h:
+/Volumes/Data/workspaces/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9/include/stdint.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdint.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdint.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/_types.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/_types.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/_types.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/_types.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/posix_types.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/posix_types.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/stddef.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/stddef.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/compiler.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/compiler.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/posix_types.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/posix_types.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/types.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/asm/types.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/types.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/linux/types.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/kernel.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/machine/kernel.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/sysmacros.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/sys/sysmacros.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/string.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/string.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/malloc.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/malloc.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdlib.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/stdlib.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/alloca.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/alloca.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/strings.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/strings.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/memory.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/memory.h:
 
-/opt/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/ctype.h:
+/Volumes/Data/workspaces/android-ndk-r11c/platforms/android-9/arch-arm/usr/include/ctype.h:
 
 libSYS/include/cmdl_parser.h:
 

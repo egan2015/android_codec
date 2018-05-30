@@ -414,7 +414,7 @@ sout_mux_t* soutOpen( sout_param_t * p_param ,sout_ts_write_cb callback, void* p
         LOGI(
                  "invalid shaping (%"PRId64"ms) resetting to 200ms\n",
                  p_sys->i_shaping_delay / 1000 );
-        p_sys->i_shaping_delay = 200000;
+        p_sys->i_shaping_delay = 300000;
     }
 
     p_sys->i_pcr_delay = (int64_t)70 * 1000;
@@ -484,12 +484,16 @@ int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
 {
 	
 	sout_mux_t *p_mux = ( sout_mux_t *)p_input->p_mux; 
-	mtime_t i_dts = p_nal->i_dts;
-	block_FifoPut( p_input->p_fifo,p_nal);
 	
+	mtime_t i_dts = p_nal->i_dts;
+	
+
+	block_FifoPut( p_input->p_fifo,p_nal);
+
+/*	
     LOGI("Jxstream put %s fifo count %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
 				block_FifoCount( p_input->p_fifo ));	
-	
+*/	
 	if( p_mux->b_waiting_stream )
     {
         const int64_t i_caching = DEFAULT_PTS_DELAY ;
@@ -504,13 +508,8 @@ int  sout_block_mux(sout_input_t * p_input , block_t *p_nal )
             return VLC_SUCCESS;
         p_mux->b_waiting_stream = false;
     }
-   
-	pthread_mutex_lock(&p_mux->lock);			
-	Mux(p_input->p_mux);	
-	pthread_mutex_unlock(&p_mux->lock);
+    
 
-	return 0;
-	
 	return Mux(p_input->p_mux);
 }
 
@@ -942,7 +941,7 @@ static bool MuxStreams(sout_mux_t *p_mux )
               p_stream->i_pes_length >= i_shaping_delay ) &&
             p_stream->i_pes_dts + p_stream->i_pes_length >=
             p_pcr_stream->i_pes_dts + p_pcr_stream->i_pes_length ){
-				
+			/*	
 			LOGI(" why %d , %s: stream pts: %"PRId64" ,stream length : %"PRId64" "
 			     " pcr pts: %"PRId64" , pcr length : %"PRId64" i_shaping_delay :%"PRId64""
 				,i
@@ -952,22 +951,18 @@ static bool MuxStreams(sout_mux_t *p_mux )
 				,p_pcr_stream->i_pes_dts
 				,p_pcr_stream->i_pes_length
 				,i_shaping_delay);	
-			
+			*/
             continue;
             
 		}
 
         /* Need more data */       
-//        LOGI("Jxstream get %s fifo count %d , inputs :%d , i = %d", p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio" ,
-//				block_FifoCount( p_input->p_fifo ),p_mux->i_nb_inputs,i); 
         if( block_FifoCount( p_input->p_fifo ) <= 1 )
         {
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
                 ( p_input->p_fmt->i_cat == VIDEO_ES ) )
             {
                 /* We need more data */
-             //   LOGI("We need more data" );
-                // continue;
 			    return true;
             }
             else if( block_FifoCount( p_input->p_fifo ) <= 0 )
@@ -1115,10 +1110,12 @@ static bool MuxStreams(sout_mux_t *p_mux )
         }
 
         p_stream->i_pes_length += p_data->i_length;
+        /*
         LOGI("Jxstream get %s i_pes_length %"PRId64" , i_length %"PRId64""
 				, p_input->p_fmt->i_cat == VIDEO_ES ? "video" : "audio"
 				, p_stream->i_pes_length
 				, p_data->i_length); 
+        */
         if( p_stream->i_pes_dts == 0 )
         {
             p_stream->i_pes_dts = p_data->i_dts;
@@ -1158,13 +1155,12 @@ static bool MuxStreams(sout_mux_t *p_mux )
         }
     }
 
-	if ( ! b_has_muxed ) return true;
     /* save */
     const mtime_t i_pcr_length = p_pcr_stream->i_pes_length;
     p_pcr_stream->b_key_frame = 0;
 
-//	if ( i_pcr_length == 0 ) return true;
     LOGI( "starting muxing %lld, %lldms\n", i_pcr_length , i_pcr_length / 1000 ); 
+
     /* 2: calculate non accurate total size of muxed ts */
     int i_packet_count = 0;
     for (int i = 0; i < p_mux->i_nb_inputs; i++ )
@@ -1789,6 +1785,8 @@ static block_t *Add_ADTS( block_t *p_data, es_format_t *p_fmt )
         return p_data; /* not enough data */
 
     int i_channels = (p_extra[i_index == 0x0f ? 4 : 1] >> 3) & 0x0f;
+
+//	LOGI("Add_ADTS index %d,channels %d, profile %d\n",i_index,i_channels,i_profile);
 
     /* keep a copy in case block_Realloc() fails */
     block_t *p_bak_block = block_Duplicate( p_data );

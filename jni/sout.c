@@ -45,7 +45,7 @@
 #define TS_SENDER_BUFFER_SIZE 188 * 7 
 
 #define USE_YUV_NV12 1
-
+#define USE_MUX_THREAD 1
 typedef struct sout_t sout_t;
 
 typedef struct video_encoder_t
@@ -243,11 +243,14 @@ void send_thread( void * arg)
 				i_buffer -= i_copy;
 				if ( i_pos == MAX_RTP_TS_PACKET_SIZE )
 				{
-					    /* Add a file descriptor to the set */
+				
+					/* Add a file descriptor to the set */
+					
 					fd_set wfds;
 					FD_ZERO(&wfds);
 					FD_SET(p_sout->fd_udp, &wfds);
 					wait_for_send(p_sout->fd_udp, &wfds,&tv); 
+					
 					int bytes = send(p_sout->fd_udp,send_buffer,i_pos,0); 
 					i_pos = 12;
 					//LOGI("Jxstreaming send to %d",bytes );
@@ -289,7 +292,10 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 		return 0;
 
 	p_sys->p_fifo = block_FifoNew();
+
+	#if USE_MUX_THREAD
 	p_sys->p_es_fifo = block_FifoNew();
+	#endif
 	
 	p_sys->p_mux = soutOpen(NULL,h264_ts_callback,p_sys);
 	p_sys->p_video_enc = NULL;
@@ -333,7 +339,9 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_create( JNIEnv *env,
 	pthread_mutex_init(&p_sys->lock,NULL);
 	
 	pthread_create(&p_sys->thread,0,send_thread,(void*)p_sys);
+	#if USE_MUX_THREAD
 	pthread_create(&p_sys->thread_mux,0,mux_thread,(void*)p_sys);
+	#endif
 	LOGI("Jxstreaming create End");
 	
 	return (jlong)p_sys;
@@ -403,14 +411,14 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_addStream(JNIEnv *env,
 	}
 	else
 	{
-		unsigned char buf[2];
+//		unsigned char buf[2];
 
 		int i_profile=1, i_sample_rate_idx = 4, i_channels=1;
 		
 		es_format_Init(&p_sout->fmt_audio_in,AUDIO_ES,VLC_CODEC_MP4A);
 		
 		p_sout->fmt_audio_in.i_extra = 2;
-		p_sout->fmt_audio_in.p_extra = buf;
+		p_sout->fmt_audio_in.p_extra = malloc(2);
 		
 		 ((uint8_t *)p_sout->fmt_audio_in.p_extra)[0] =
             (i_profile + 1) << 3 | (i_sample_rate_idx >> 1);
@@ -449,11 +457,12 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_createVideoEncoder(JNIEnv * env,
 	p_enc->p_sout = p_sout; 
 	p_enc->param = (x264_param_t*)malloc(sizeof(x264_param_t));
 	p_enc->picture = (x264_picture_t*)malloc(sizeof(x264_picture_t));
-	//x264_param_default(p_enc->param);
+	x264_param_default(p_enc->param);
 	x264_param_default_preset(p_enc->param, "veryfast" , "zerolatency" );
 	x264_param_apply_profile(p_enc->param,"baseline");
 
 	p_enc->param->i_log_level = X264_LOG_NONE;
+	//p_enc->param->i_level_idc=30;
 	p_enc->param->i_width = width;
 	p_enc->param->i_height = height;
 		
@@ -465,14 +474,16 @@ Java_com_smartvision_jxvideoh264_Jxstreaming_createVideoEncoder(JNIEnv * env,
 	p_enc->param->i_fps_num = fps;
 	p_enc->param->i_fps_den = 1;
 	
-	p_enc->param->rc.b_mb_tree = 0;
+//	p_enc->param->rc.b_mb_tree = 0;
 	p_enc->param->i_keyint_max = fps * 2 ;
+	p_enc->param->i_keyint_min = fps * 2 ;
 
-	p_enc->param->i_bframe = 0;	
+//	p_enc->param->i_bframe = 3;	
 	
 	p_enc->param->rc.i_bitrate = rate/1000;
-	p_enc->param->rc.i_rc_method = X264_RC_CRF;
+	p_enc->param->rc.i_rc_method = X264_RC_ABR;
 	p_enc->param->rc.i_vbv_max_bitrate=(int)((rate*1.2)/1000) ;
+	p_enc->param->rc.f_rate_tolerance=0.1;
 	p_enc->param->b_repeat_headers = 1;
 	p_enc->f_fps = fps;
 	p_enc->param->b_annexb = 1;
@@ -577,11 +588,13 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_send( JNIEnv *env,
 //	LOGI("Jxstreaming send :%d",i_frame_length);
 
 	p_es->p_owner = p_input;
-	pthread_mutex_lock(&p_sys->lock);
-	block_FifoPut(p_sys->p_es_fifo,p_es);
-	pthread_mutex_unlock(&p_sys->lock);
-	//sout_block_mux( p_input, p_es );
-	
+	#if USE_MUX_THREAD
+		pthread_mutex_lock(&p_sys->lock);
+		block_FifoPut(p_sys->p_es_fifo,p_es);
+		pthread_mutex_unlock(&p_sys->lock);
+	#else
+		sout_block_mux( p_input, p_es );
+	#endif
 	(*env)->ReleaseByteArrayElements(env,p_frame,p_es_data,0);	
 	return i_frame_length;
 }
@@ -629,26 +642,19 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_encodeVideo(JNIEnv *env,
   p_es->i_buffer = bytes;
   p_es->i_pts = VLC_TS_0 + p_enc->i_dts;
   p_es->i_dts = VLC_TS_0 + p_enc->i_dts;
-  p_es->i_length = (int64_t)((double)1000000.0 / p_enc->f_fps );
+  p_es->i_length = (int64_t)((double)1000000.0 / 30 );
   p_es->p_owner = p_enc->p_in;
-  p_enc->p_sout->i_dts = p_enc->i_dts += (int64_t)((double)1000000.0 / p_enc->f_fps );
+  p_enc->p_sout->i_dts = p_enc->i_dts += (int64_t)((double)1000000.0 / 30 );
 
-/*
-  int i_h264_slice_type = pic_out.i_type;
-  if( i_h264_slice_type == H264_SLICE_TYPE_IDR || i_h264_slice_type == H264_SLICE_TYPE_I )
-		p_es->i_flags |= BLOCK_FLAG_TYPE_I;
-  else if( i_h264_slice_type == H264_SLICE_TYPE_P )
-		p_es->i_flags |= BLOCK_FLAG_TYPE_P;
-  else if( i_h264_slice_type == H264_SLICE_TYPE_B )
-		p_es->i_flags |= BLOCK_FLAG_TYPE_B;
-*/
   p_es->i_flags |= h264_frame_type(p_es->p_buffer[4] & 0x1f );
   if ( p_enc->p_in ){
+#if USE_MUX_THREAD	  
 	  pthread_mutex_lock(&p_enc->p_sout->lock);
 	  block_FifoPut(p_enc->p_sout->p_es_fifo,p_es);
 	  pthread_mutex_unlock(&p_enc->p_sout->lock);
-	  //sout_block_mux(p_enc->p_in,p_es);
-//	  LOGI("encode video %d\n",p_es->i_buffer);
+#else	  
+	  sout_block_mux(p_enc->p_in,p_es);
+#endif
   }else
 	block_Release(p_es);
 	
@@ -705,14 +711,19 @@ jint Java_com_smartvision_jxvideoh264_Jxstreaming_destroy(JNIEnv *env,
   sout_t * p_sout = (sout_t*)handle;
   if ( p_sout != NULL )
 	{		
-	  block_t * p_end = block_Alloc(1);
-	  p_end->i_flags = BLOCK_FLAG_PREROLL;
-	  block_FifoPut(p_sout->p_es_fifo,block_Duplicate(p_end));
-	  block_FifoPut(p_sout->p_fifo,p_end);
 	  pthread_mutex_lock(&p_sout->lock);
 	  p_sout->b_closed = true;
 	  pthread_mutex_unlock(&p_sout->lock);
+
+	  block_t * p_end = block_Alloc(1);
+	  p_end->i_flags = BLOCK_FLAG_PREROLL;
+	  block_FifoPut(p_sout->p_es_fifo,block_Duplicate(p_end));
+	  block_t *p_end1 = block_Alloc(1);
+	  p_end1->i_flags = BLOCK_FLAG_PREROLL;	  
+	  block_FifoPut(p_sout->p_fifo,p_end1);
+	  
 	  pthread_join(p_sout->thread_mux,NULL);
+	  
 	  pthread_join(p_sout->thread,NULL);
 	  block_FifoRelease(p_sout->p_fifo);
 	  block_FifoRelease(p_sout->p_es_fifo);
